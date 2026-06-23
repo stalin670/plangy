@@ -91,6 +91,49 @@ function filePath(p) {
   return el('span', { class: 'path' }, el('span', { class: 'dir' }, p.slice(0, i + 1)), p.slice(i + 1));
 }
 
+// ---- tiny offline syntax highlighter (js / json / bash) ----
+function escapeHtml(s) {
+  return s.replace(/[&<>]/g, c => (c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;'));
+}
+const GRAMMARS = {
+  js: [
+    ['comment', String.raw`\/\/[^\n]*|\/\*[\s\S]*?\*\/`],
+    ['string', String.raw`\`(?:\\.|[^\`\\])*\`|'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"`],
+    ['number', String.raw`\b0[xX][0-9a-fA-F]+\b|\b\d[\d_]*(?:\.\d+)?(?:[eE][+-]?\d+)?\b`],
+    ['keyword', String.raw`\b(?:const|let|var|function|return|if|else|for|of|in|while|switch|case|break|continue|import|from|export|default|async|await|new|class|extends|super|this|try|catch|finally|throw|typeof|instanceof|yield|void|delete|null|true|false|undefined)\b`],
+    ['fn', String.raw`[A-Za-z_$][\w$]*(?=\s*\()`],
+  ],
+  json: [
+    ['string', String.raw`"(?:\\.|[^"\\])*"`],
+    ['number', String.raw`-?\b\d[\d_]*(?:\.\d+)?(?:[eE][+-]?\d+)?\b`],
+    ['keyword', String.raw`\b(?:true|false|null)\b`],
+  ],
+  bash: [
+    ['comment', String.raw`#[^\n]*`],
+    ['string', String.raw`"(?:\\.|[^"\\])*"|'[^']*'`],
+    ['builtin', String.raw`\b(?:npm|npx|pnpm|yarn|node|git|docker|python|pip|go|cargo|make|curl|wget|mkdir|rm|cp|mv|cd|echo|export|cat|sleep|kill|taskkill)\b`],
+    ['keyword', String.raw`\b(?:if|then|else|elif|fi|for|do|done|in|while|case|esac|function|return)\b`],
+    ['flag', String.raw`(?<=\s)-{1,2}[A-Za-z][\w-]*`],
+  ],
+};
+const LANG_ALIAS = { js: 'js', javascript: 'js', ts: 'js', typescript: 'js', jsx: 'js', tsx: 'js', json: 'json', bash: 'bash', sh: 'bash', shell: 'bash', zsh: 'bash', console: 'bash' };
+
+function highlightCode(code, lang) {
+  const g = GRAMMARS[LANG_ALIAS[(lang || '').toLowerCase()]];
+  if (!g) return escapeHtml(code);
+  const re = new RegExp(g.map(([c, src]) => `(?<${c}>${src})`).join('|'), 'gm');
+  let out = '', last = 0, m;
+  while ((m = re.exec(code)) !== null) {
+    if (m.index > last) out += escapeHtml(code.slice(last, m.index));
+    const cls = Object.keys(m.groups).find(k => m.groups[k] !== undefined);
+    out += `<span class="t-${cls}">${escapeHtml(m[0])}</span>`;
+    last = re.lastIndex;
+    if (m[0] === '') re.lastIndex++;
+  }
+  out += escapeHtml(code.slice(last));
+  return out;
+}
+
 function progressRing(pct) {
   const r = 34;
   const circ = (2 * Math.PI * r).toFixed(1);
@@ -238,7 +281,7 @@ async function render(model) {
       const wrap = el('div', { class: 'codeblock' });
       const bar = el('div', { class: 'codebar' }, el('span', { class: 'lang' }, blk.lang || 'text'));
       bar.append(copyBtn(() => blk.value));
-      wrap.append(bar, el('pre', { class: 'code' }, el('code', {}, blk.value)));
+      wrap.append(bar, el('pre', { class: 'code' }, el('code', { html: highlightCode(blk.value, blk.lang) })));
       cd.append(wrap);
     }
     app.append(cd);
