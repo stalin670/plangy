@@ -4,6 +4,7 @@
   "description": "Turn any plan.md into live-reloading visuals in your browser.",
   "type": "module",
   "bin": { "plangy": "bin/cli.js" },
+  "files": ["bin", "src", "web"],
   "engines": { "node": ">=18" },
   "scripts": { "test": "node --test" },
   "license": "MIT",
