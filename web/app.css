@@ -18,6 +18,8 @@
   --partial: #D8A038;
   --todo:    #39414D;
 
+  --bar: rgba(15, 18, 24, .85);
+
   --mono: ui-monospace, SFMono-Regular, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
@@ -43,6 +45,8 @@
   --done-bg: #E4F4E9;
   --partial: #9A6700;
   --todo:    #E3E8EF;
+
+  --bar: rgba(246, 248, 251, .85);
 }
 
 * { box-sizing: border-box; }
@@ -75,7 +79,7 @@ body::before {
   align-items: center;
   gap: .9rem;
   padding: .85rem 1.5rem;
-  background: rgba(15,18,24,.85);
+  background: var(--bar);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
   position: sticky;
@@ -156,7 +160,7 @@ body::before {
   gap: .35rem;
   flex-wrap: wrap;
   padding: .55rem 1.5rem;
-  background: rgba(15,18,24,.85);
+  background: var(--bar);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
   position: sticky;
