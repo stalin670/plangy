@@ -37,11 +37,9 @@ Point it at any markdown plan and it opens a browser tab with the plan rendered 
 
 ## Demo
 
-<!-- Record `plangy examples/plan.md` and drop the file at docs/demo.gif, then uncomment:
-![plangy demo](docs/demo.gif)
--->
+**Try it live (no install): https://stalin670.github.io/plangy/**
 
-_Demo gif coming soon._ For now, run `plangy examples/plan.md` after installing - the bundled example shows every panel.
+A static render of the bundled example plan - every panel, the diff/edit/print buttons, light/dark, all working in the browser (live-reload is the only thing that needs the local CLI). Or run `plangy examples/plan.md` after installing.
 
 ## Features
 

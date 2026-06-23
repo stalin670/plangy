@@ -33,7 +33,8 @@
     "url": "https://github.com/stalin670/plangy/issues"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "build:demo": "node scripts/build-demo.mjs"
   },
   "license": "MIT",
   "dependencies": {
