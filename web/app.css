@@ -649,6 +649,22 @@ body.editing .txt[contenteditable="true"]:focus {
   text-decoration: none;
 }
 
+.reorder-ctl { margin-left: auto; display: inline-flex; gap: .2rem; flex: none; }
+.reorder {
+  font-family: var(--mono);
+  font-size: .72rem;
+  line-height: 1;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 1px solid var(--border-2);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+.reorder:hover:not(:disabled) { color: var(--accent); border-color: var(--accent-dim); }
+.reorder:disabled { opacity: .35; cursor: default; }
+
 .editbar {
   position: fixed;
   left: 50%;

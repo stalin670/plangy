@@ -39,8 +39,19 @@ syncThemeBtn();
 let currentModel = null;
 let currentFile = 0; // index when multiple plan files are served
 let editing = false;
-const pending = new Map();     // source line -> checked boolean
-const pendingText = new Map(); // source line -> new task text
+const pending = new Map();        // source line -> checked boolean
+const pendingText = new Map();    // source line -> new task text
+const reorderedGroups = new Map(); // group id -> [item source lines, in new order]
+
+// A group can be reordered only when its items occupy consecutive source lines
+// (no interleaved code/prose between them) — that keeps the line-level export safe.
+function contiguous(g) {
+  const ls = g.items.map(i => i.line);
+  if (ls.some(x => x == null)) return false;
+  const sorted = ls.slice().sort((a, b) => a - b);
+  for (let i = 1; i < sorted.length; i++) if (sorted[i] !== sorted[i - 1] + 1) return false;
+  return true;
+}
 
 function findItem(line) {
   if (!currentModel) return null;
@@ -97,7 +108,7 @@ async function initFiles() {
     filesSel.hidden = false;
     filesSel.addEventListener('change', () => {
       currentFile = Number(filesSel.value);
-      pending.clear(); pendingText.clear(); // edits are per-file
+      pending.clear(); pendingText.clear(); reorderedGroups.clear(); // edits are per-file
       load();
     });
   } else {
@@ -122,18 +133,41 @@ function rerender() {
   render(currentModel).then(() => window.scrollTo(0, y));
 }
 
+// Produce the edited content for a single source line (text edit then checkbox).
+function editedLine(origLine, orig) {
+  let s = orig[origLine - 1];
+  if (s == null) return s;
+  if (pendingText.has(origLine)) s = s.replace(/^(\s*[-*+]\s*\[[ xX]\]\s*).*$/, (m, p1) => p1 + pendingText.get(origLine));
+  if (pending.has(origLine)) s = s.replace(/\[( |x|X)\]/, pending.get(origLine) ? '[x]' : '[ ]');
+  return s;
+}
+
 function patchRaw(raw) {
-  const lines = raw.split(/\r?\n/);
-  for (const [line, text] of pendingText) {
-    const i = line - 1;
-    // keep the bullet + checkbox prefix, replace the text after it
-    if (i >= 0 && i < lines.length) lines[i] = lines[i].replace(/^(\s*[-*+]\s*\[[ xX]\]\s*).*$/, (m, p1) => p1 + text);
+  const orig = raw.split(/\r?\n/);
+  const out = orig.slice();
+  const handled = new Set();
+  // reordered groups: write each item's edited content into the group's sorted
+  // line positions, in the new item order
+  for (const order of reorderedGroups.values()) for (const ln of order) handled.add(ln);
+  for (const order of reorderedGroups.values()) {
+    const positions = order.slice().sort((a, b) => a - b);
+    order.forEach((ln, k) => { if (positions[k] != null) out[positions[k] - 1] = editedLine(ln, orig); });
   }
-  for (const [line, checked] of pending) {
-    const i = line - 1;
-    if (i >= 0 && i < lines.length) lines[i] = lines[i].replace(/\[( |x|X)\]/, checked ? '[x]' : '[ ]');
+  // remaining checkbox/text edits not inside a reordered group: apply in place
+  for (const ln of new Set([...pending.keys(), ...pendingText.keys()])) {
+    if (!handled.has(ln) && ln >= 1 && ln <= orig.length) out[ln - 1] = editedLine(ln, orig);
   }
-  return lines.join('\n');
+  return out.join('\n');
+}
+
+function moveItem(g, idx, dir) {
+  const j = idx + dir;
+  if (j < 0 || j >= g.items.length) return;
+  const arr = g.items;
+  [arr[idx], arr[j]] = [arr[j], arr[idx]];
+  reorderedGroups.set(g.id, arr.map(i => i.line));
+  rerender();
+  updateEditbar();
 }
 async function exportMarkdown() {
   const raw = BOOT ? (BOOT.raw || '') : await fetch(`/raw?i=${currentFile}`).then(r => r.text());
@@ -203,11 +237,11 @@ btnDownload.addEventListener('click', async () => {
   a.click();
   URL.revokeObjectURL(a.href);
 });
-btnReset.addEventListener('click', () => { pending.clear(); pendingText.clear(); load(); updateEditbar(); });
+btnReset.addEventListener('click', () => { pending.clear(); pendingText.clear(); reorderedGroups.clear(); load(); updateEditbar(); });
 editbar.append(editcount, btnReset, btnDownload, btnCopy);
 document.body.append(editbar);
 function updateEditbar() {
-  const n = pending.size + pendingText.size;
+  const n = pending.size + pendingText.size + reorderedGroups.size;
   editcount.textContent = `${n} edit${n === 1 ? '' : 's'}`;
   editbar.classList.toggle('show', editing);
 }
@@ -441,8 +475,9 @@ async function render(model) {
       rail.append(el('span', { style: `width:${state === 'zero' ? 0 : pct}%` }));
       group.append(rail);
       const gd = currentDiff && currentDiff.perGroup.get(g.heading);
+      const canReorder = editing && contiguous(g) && g.items.length > 1;
       const items = el('div', { class: 'items' });
-      for (const it of g.items) {
+      g.items.forEach((it, idx) => {
         const txt = el('span', { class: 'txt' }, it.text);
         if (editing && it.line != null) {
           txt.setAttribute('contenteditable', 'true');
@@ -452,11 +487,21 @@ async function render(model) {
         }
         let cls = 'item' + (it.checked ? ' on' : '');
         if (gd) { if (gd.added.has(it.text)) cls += ' d-add'; else if (gd.doneChanged.has(it.text)) cls += ' d-done'; }
-        items.append(el('div', { class: cls, 'data-search': it.text.toLowerCase(), 'data-line': it.line == null ? '' : String(it.line) },
+        const row = el('div', { class: cls, 'data-search': it.text.toLowerCase(), 'data-line': it.line == null ? '' : String(it.line) },
           el('span', { class: 'chk' }, it.checked ? '✓' : ''),
           txt,
-        ));
-      }
+        );
+        if (canReorder) {
+          const up = el('button', { class: 'reorder', title: 'Move up' }, '↑');
+          const down = el('button', { class: 'reorder', title: 'Move down' }, '↓');
+          if (idx === 0) up.disabled = true;
+          if (idx === g.items.length - 1) down.disabled = true;
+          up.addEventListener('click', () => moveItem(g, idx, -1));
+          down.addEventListener('click', () => moveItem(g, idx, 1));
+          row.append(el('span', { class: 'reorder-ctl' }, up, down));
+        }
+        items.append(row);
+      });
       if (gd) for (const r of gd.removed) {
         items.append(el('div', { class: 'item d-rem' },
           el('span', { class: 'chk' }, r.c ? '✓' : ''),
