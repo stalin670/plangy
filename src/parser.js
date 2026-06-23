@@ -76,7 +76,11 @@ export function parsePlan(md) {
       const items = [];
       for (const item of node.children) {
         if (typeof item.checked === 'boolean') {
-          items.push({ text: textOf(item).trim(), checked: item.checked });
+          items.push({
+            text: textOf(item).trim(),
+            checked: item.checked,
+            line: (item.position && item.position.start && item.position.start.line) || null,
+          });
         }
       }
       if (items.length) {

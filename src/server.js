@@ -20,6 +20,7 @@ function buildModel(file) {
     .map(n => ({ ...n, deps: deps[n.title] || [] }));
   return {
     ...model,
+    fileName: path.basename(file),
     flow: phasesToMermaid(model.phases),
     pipeline,
     stats: deriveStats(model),
@@ -50,6 +51,10 @@ export function startServer({ file, port = 7331, openBrowser = true }) {
     if (req.url === '/model') {
       res.writeHead(200, { 'content-type': 'application/json' });
       return res.end(JSON.stringify(buildModel(file)));
+    }
+    if (req.url === '/raw') {
+      res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
+      return res.end(existsSync(file) ? readFileSync(file, 'utf8') : '');
     }
     if (req.url === '/events') {
       res.writeHead(200, {

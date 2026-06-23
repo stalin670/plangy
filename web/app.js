@@ -32,6 +32,90 @@ themeBtn.addEventListener('click', () => {
 });
 syncThemeBtn();
 
+// ---- edit mode + export ----
+let currentModel = null;
+let editing = false;
+const pending = new Map(); // source line -> checked boolean
+
+function applyPending() {
+  if (!currentModel) return;
+  for (const g of currentModel.tasks) {
+    for (const it of g.items) {
+      if (it.line != null && pending.has(it.line)) it.checked = pending.get(it.line);
+    }
+    g.done = g.items.filter(i => i.checked).length;
+    g.total = g.items.length;
+  }
+  if (currentModel.stats) currentModel.stats.done = currentModel.tasks.reduce((a, g) => a + g.done, 0);
+}
+
+function rerender() {
+  const y = window.scrollY;
+  render(currentModel).then(() => window.scrollTo(0, y));
+}
+
+function patchRaw(raw) {
+  const lines = raw.split(/\r?\n/);
+  for (const [line, checked] of pending) {
+    const i = line - 1;
+    if (i >= 0 && i < lines.length) lines[i] = lines[i].replace(/\[( |x|X)\]/, checked ? '[x]' : '[ ]');
+  }
+  return lines.join('\n');
+}
+async function exportMarkdown() {
+  const raw = await fetch('/raw').then(r => r.text());
+  return patchRaw(raw);
+}
+
+const editBtn = document.getElementById('edit');
+function syncEditBtn() { editBtn.textContent = editing ? 'editing' : 'edit'; editBtn.classList.toggle('on', editing); }
+editBtn.addEventListener('click', () => {
+  editing = !editing;
+  document.body.classList.toggle('editing', editing);
+  syncEditBtn();
+  updateEditbar();
+});
+
+// clicking a task checkbox while editing toggles it (tracked by source line)
+app.addEventListener('click', e => {
+  if (!editing) return;
+  const item = e.target.closest('.item[data-line]');
+  if (!item) return;
+  const line = Number(item.getAttribute('data-line'));
+  if (!line) return;
+  pending.set(line, !item.classList.contains('on'));
+  applyPending();
+  rerender();
+  updateEditbar();
+});
+
+// floating export bar (visible only in edit mode)
+const editbar = el('div', { class: 'editbar', id: 'editbar' });
+const editcount = el('span', { class: 'editcount' }, '0 edits');
+const btnCopy = el('button', { class: 'ebtn primary' }, 'Copy .md');
+const btnDownload = el('button', { class: 'ebtn' }, 'Download .md');
+const btnReset = el('button', { class: 'ebtn ghost' }, 'Reset');
+btnCopy.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(await exportMarkdown()); btnCopy.textContent = 'Copied!'; setTimeout(() => (btnCopy.textContent = 'Copy .md'), 1200); }
+  catch { btnCopy.textContent = 'Failed'; }
+});
+btnDownload.addEventListener('click', async () => {
+  const md = await exportMarkdown();
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = el('a', { href: URL.createObjectURL(blob), download: (currentModel && currentModel.fileName) || 'plan.md' });
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+btnReset.addEventListener('click', () => { pending.clear(); load(); updateEditbar(); });
+editbar.append(editcount, btnReset, btnDownload, btnCopy);
+document.body.append(editbar);
+function updateEditbar() {
+  const n = pending.size;
+  editcount.textContent = `${n} edit${n === 1 ? '' : 's'}`;
+  editbar.classList.toggle('show', editing);
+}
+syncEditBtn();
+
 mermaid.initialize({
   startOnLoad: false,
   securityLevel: 'loose',
@@ -236,7 +320,7 @@ async function render(model) {
       group.append(rail);
       const items = el('div', { class: 'items' });
       for (const it of g.items) {
-        items.append(el('div', { class: 'item' + (it.checked ? ' on' : ''), 'data-search': it.text.toLowerCase() },
+        items.append(el('div', { class: 'item' + (it.checked ? ' on' : ''), 'data-search': it.text.toLowerCase(), 'data-line': it.line == null ? '' : String(it.line) },
           el('span', { class: 'chk' }, it.checked ? '✓' : ''),
           el('span', { class: 'txt' }, it.text),
         ));
@@ -430,8 +514,11 @@ document.addEventListener('keydown', e => {
 async function load() {
   try {
     const model = await fetch('/model').then(r => r.json());
+    currentModel = model;
+    applyPending();
     await render(model);
     applyFilter();
+    updateEditbar();
     statusEl.classList.remove('stale');
   } catch (e) {
     statusEl.classList.add('stale');

@@ -15,5 +15,7 @@ test('serves parsed model as json', async () => {
   assert.equal(model.phases[0].title, 'Setup');
   assert.match(model.flow, /flowchart TB/);
   assert.equal(model.pipeline[0].title, 'Setup');
+  const raw = await fetch(`${srv.url}/raw`).then(r => r.text());
+  assert.match(raw, /# Setup/);
   await srv.close();
 });

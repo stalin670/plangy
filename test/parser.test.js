@@ -65,8 +65,8 @@ test('groups checklist items under heading with done/total counts', () => {
   assert.equal(m.tasks[0].total, 2);
   assert.equal(m.tasks[0].done, 1);
   assert.deepEqual(m.tasks[0].items, [
-    { text: 'first', checked: false },
-    { text: 'second', checked: true },
+    { text: 'first', checked: false, line: 2 },
+    { text: 'second', checked: true, line: 3 },
   ]);
 });
 

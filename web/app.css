@@ -617,6 +617,45 @@ td code { font-family: var(--mono); font-size: .85em; color: var(--accent); }
 .hide { display: none !important; }
 .dim { opacity: .35; transition: opacity .15s ease; }
 
+/* ---------- edit mode + export ---------- */
+.iconbtn.on { color: var(--accent); border-color: var(--accent-dim); background: var(--accent-dim); }
+body.editing .item[data-line]:not([data-line=""]) { cursor: pointer; }
+body.editing .item[data-line]:not([data-line=""]):hover { background: var(--surface-2); }
+body.editing .item[data-line]:not([data-line=""]):hover .chk { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(90,162,255,.12); }
+
+.editbar {
+  position: fixed;
+  left: 50%;
+  bottom: 1.2rem;
+  transform: translate(-50%, 220%);
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 12px;
+  padding: .5rem .6rem;
+  box-shadow: 0 12px 34px rgba(0,0,0,.4);
+  z-index: 50;
+  transition: transform .25s ease;
+}
+.editbar.show { transform: translate(-50%, 0); }
+.editcount { font-family: var(--mono); font-size: .72rem; color: var(--muted); padding: 0 .4rem; }
+.ebtn {
+  font-family: var(--mono);
+  font-size: .74rem;
+  padding: .4rem .85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--border-2);
+  background: var(--surface-2);
+  color: var(--text);
+}
+.ebtn:hover { border-color: var(--accent-dim); }
+.ebtn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ebtn.primary:hover { filter: brightness(1.08); }
+.ebtn.ghost { background: transparent; color: var(--muted); }
+
 /* ---------- responsive ---------- */
 @media (max-width: 640px) {
   main { padding: 1.25rem 1rem 4rem; }
