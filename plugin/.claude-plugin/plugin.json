@@ -1,7 +1,7 @@
 {
   "name": "plangy",
-  "description": "Open the current plan.md as live browser visuals — flow diagrams, task progress, file maps. Wraps the plangy CLI.",
-  "version": "0.1.0",
+  "description": "Visualize the plan from your last response (or a file) as live browser diagrams — flow, task progress, file maps. Wraps the plangy CLI.",
+  "version": "0.1.1",
   "author": {
     "name": "stalin670",
     "url": "https://github.com/stalin670"

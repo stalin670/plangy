@@ -164,11 +164,11 @@ Install the plugin so `/plangy` is a built-in command that finds the latest plan
 Then, after your agent writes a plan, just type:
 
 ```
-/plangy                 # auto-detects the latest plan file
+/plangy                 # visualizes the plan from the last response
 /plangy path/to/plan.md # or point at a specific file
 ```
 
-It auto-detects the freshest plan (`./plan.md`, then the newest file under `plans/`/`specs/`, then any `*plan*.md`), launches plangy in the background, and prints the URL. It uses your global `plangy` install if present, otherwise falls back to `npx`.
+With no argument, `/plangy` visualizes the plan in the **last response**: if that response saved a real `.md` file it uses it, otherwise it captures the response's markdown to `.plangy/last-plan.md` and renders that (edit the file and the view live-reloads). If the last response has no plan/markdown, it shows a short "nothing to visualize" message instead of launching. It uses your global `plangy` install if present, otherwise falls back to `npx`.
 
 > Prefer not to install the plugin? You can drop the same command in manually: create `.claude/commands/plangy.md` (per-project) or `~/.claude/commands/plangy.md` (personal, all projects) with a prompt that runs `plangy plan.md`.
 
