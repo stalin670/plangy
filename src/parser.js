@@ -107,7 +107,11 @@ export function parsePlan(md) {
         // body content (e.g. a review checklist), not document metadata.
         if (value && model.tasks.length === 0) model.meta[key] = value;
       } else if (/^Run:\s*/i.test(full)) {
-        model.runs.push({ cmd: full.replace(/^Run:\s*/i, '').replace(/^`|`$/g, '').trim(), phaseTitle: phaseTitle() });
+        // grab just the command (first inline code), not the trailing "Expected:" line
+        const codes = [];
+        collectInlineCode(node, codes);
+        const cmd = (codes[0] || full.replace(/^Run:\s*/i, '').split(/\r?\n/)[0]).trim();
+        if (cmd) model.runs.push({ cmd, phaseTitle: phaseTitle() });
       } else if (!current) {
         model.notes.push(full);
       }
