@@ -146,22 +146,39 @@ plangy plan.md --no-open        # don't auto-open; just print the URL
 
 ## Use with any agent
 
-plangy just reads a markdown file, so it works with anything that writes one — Claude Code, codex, cursor, gemini, or your own scripts. After your agent writes the plan, run:
+plangy just reads a markdown file, so it works with anything that writes one — Claude Code, Codex, Cursor, Gemini, or your own scripts. The terminal command works everywhere:
 
 ```bash
-plangy plan.md
+plangy plan.md          # or: npx plangy plan.md
 ```
 
-### Claude Code plugin (`/plangy`)
+The richer `/plangy` slash command (visualize the plan from your last response) is available as a **Claude Code plugin** below. For other agents, use the CLI directly.
 
-Install the plugin so `/plangy` is a built-in command that finds the latest plan and opens it:
+### Claude Code — install the `/plangy` plugin
+
+This adds a `/plangy` command and lists plangy under `/plugins`.
+
+**1. Add the marketplace** (one time — registers where to find the plugin):
 
 ```
 /plugin marketplace add stalin670/plangy
+```
+
+**2. Install the plugin** (`plugin-name@marketplace-name`):
+
+```
 /plugin install plangy@plangy
 ```
 
-Then, after your agent writes a plan, just type:
+**3. Reload** so the command registers:
+
+```
+/reload-plugins
+```
+
+> Prefer a menu? Just type `/plugin` → **Browse marketplaces** → **plangy** → **Install**.
+
+Now use it after any response that contains a plan:
 
 ```
 /plangy                 # visualizes the plan from the last response
@@ -170,7 +187,37 @@ Then, after your agent writes a plan, just type:
 
 With no argument, `/plangy` visualizes the plan in the **last response**: if that response saved a real `.md` file it uses it, otherwise it captures the response's markdown to `.plangy/last-plan.md` and renders that (edit the file and the view live-reloads). If the last response has no plan/markdown, it shows a short "nothing to visualize" message instead of launching. It uses your global `plangy` install if present, otherwise falls back to `npx`.
 
-> Prefer not to install the plugin? You can drop the same command in manually: create `.claude/commands/plangy.md` (per-project) or `~/.claude/commands/plangy.md` (personal, all projects) with a prompt that runs `plangy plan.md`.
+**Updating the plugin later:**
+
+```
+/plugin marketplace update plangy
+/plugin update plangy@plangy
+```
+
+### Codex — run after the plan is written
+
+Codex has no Claude-style plugin marketplace, so use the CLI. After Codex writes the plan, run in your terminal:
+
+```bash
+plangy plan.md
+```
+
+Or wire it into your workflow with a shell alias / task so it runs automatically once the plan file is saved.
+
+### Cursor, Gemini, and others
+
+Same pattern — these agents write a plan file, then you run the CLI:
+
+```bash
+plangy plan.md          # installed globally
+npx plangy plan.md      # or zero-install
+```
+
+If your agent supports custom commands or hooks, point one at `plangy plan.md` so a single keystroke opens the visualizer after the plan is written.
+
+### Manual slash command (no plugin install)
+
+Don't want to install the plugin? Drop the command in by hand. Create `.claude/commands/plangy.md` (per-project) or `~/.claude/commands/plangy.md` (personal, all projects) containing a prompt that runs `plangy plan.md`.
 
 ## How it works
 
