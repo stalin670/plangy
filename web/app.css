@@ -21,8 +21,8 @@
   --mono: ui-monospace, SFMono-Regular, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
-  --radius: 12px;
-  --maxw: 1080px;
+  --radius: 14px;
+  --maxw: 1140px;
 }
 
 * { box-sizing: border-box; }
@@ -38,6 +38,16 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 420px;
+  background: radial-gradient(70% 100% at 50% 0%, rgba(90,162,255,.08), transparent 72%);
+  pointer-events: none;
+  z-index: 0;
+}
+.topbar, .jump, main { position: relative; z-index: 1; }
 
 /* ---------- top bar ---------- */
 .topbar {
@@ -170,15 +180,105 @@ section > h2::after {
 section.collapsed > h2::after { content: "+"; }
 section.collapsed > *:not(h2):not(.eyebrow) { display: none; }
 
-/* ---------- flow ---------- */
+/* ---------- flow (custom pipeline) ---------- */
 .mermaid-wrap {
   overflow-x: auto;
   padding: .5rem 0;
 }
 .mermaid-wrap svg { max-width: 100%; height: auto; }
 
+.pipeline { display: flex; flex-direction: column; }
+.pnode {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  position: relative;
+  padding-bottom: .8rem;
+}
+.pnode:last-child { padding-bottom: 0; }
+/* connector rail between badges */
+.pnode:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 19px;
+  top: 40px;
+  bottom: -2px;
+  width: 2px;
+  background: linear-gradient(var(--accent-dim), var(--border));
+}
+.pnum {
+  flex: none;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--surface-2);
+  border: 1px solid var(--accent-dim);
+  box-shadow: 0 0 0 4px rgba(90,162,255,.05);
+  position: relative;
+  z-index: 1;
+}
+.pnode.done .pnum { color: var(--done); border-color: var(--done); background: var(--done-bg); }
+.pcard {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: .75rem 1.1rem;
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.pcard:hover {
+  border-color: var(--accent-dim);
+  transform: translateX(3px);
+  box-shadow: -4px 0 0 -1px var(--accent);
+}
+.ptitle { font-weight: 550; font-size: .98rem; }
+.psteps {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: .72rem;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: .14rem .6rem;
+  white-space: nowrap;
+}
+
+/* ---------- pills ---------- */
+.pill {
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: .16rem .55rem;
+  border-radius: 99px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.pill.done { color: var(--done); border-color: var(--done); background: var(--done-bg); }
+.pill.part { color: var(--partial); border-color: var(--partial); background: rgba(216,160,56,.1); }
+.pill.zero { color: var(--muted); border-color: var(--border-2); background: var(--surface-2); }
+
 /* ---------- tasks ---------- */
-.taskgroup { margin: 0 0 1.3rem; }
+.taskgroup {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-2);
+  border-radius: 11px;
+  padding: 1rem 1.15rem 1.1rem;
+  margin: 0 0 .9rem;
+}
+.taskgroup.done { border-left-color: var(--done); }
+.taskgroup.part { border-left-color: var(--partial); }
+.taskgroup.zero { border-left-color: var(--accent); }
 .taskgroup:last-child { margin-bottom: 0; }
 
 .tg-head {

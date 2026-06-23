@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { phasesToMermaid } from '../src/flow.js';
+import { phasesToMermaid, buildPipeline } from '../src/flow.js';
 
 test('builds sequential flowchart from phases', () => {
   const out = phasesToMermaid([
@@ -31,4 +31,20 @@ test('selects the dominant heading depth as the pipeline', () => {
 
 test('empty phases returns placeholder', () => {
   assert.match(phasesToMermaid([]), /No phases/);
+});
+
+test('buildPipeline numbers phases and pulls step counts from tasks', () => {
+  const phases = [
+    { id: 'p0', title: 'Task A', depth: 2, steps: [] },
+    { id: 'p1', title: 'Task B', depth: 2, steps: [] },
+  ];
+  const tasks = [{ heading: 'Task A', total: 3, done: 1 }];
+  const pipe = buildPipeline(phases, tasks);
+  assert.equal(pipe.length, 2);
+  assert.deepEqual(pipe[0], { n: 1, title: 'Task A', steps: 3, done: 1 });
+  assert.deepEqual(pipe[1], { n: 2, title: 'Task B', steps: 0, done: 0 });
+});
+
+test('buildPipeline handles no phases', () => {
+  assert.deepEqual(buildPipeline([], []), []);
 });

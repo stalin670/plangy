@@ -65,9 +65,26 @@ async function render(model) {
   app.innerHTML = '';
   const nav = [];
 
-  // ---- Flow ----
-  const flow = section('flow', 'pipeline', 'Flow');
-  await renderMermaid(flow, model.flow, 'flow');
+  // ---- Flow (custom pipeline) ----
+  const pipeline = model.pipeline && model.pipeline.length
+    ? model.pipeline
+    : (model.phases || []).map((p, i) => ({ n: i + 1, title: p.title, steps: 0, done: 0 }));
+  const flow = section('flow', 'pipeline', 'Flow', `${pipeline.length} phases`);
+  if (pipeline.length) {
+    const rail = el('div', { class: 'pipeline' });
+    for (const ph of pipeline) {
+      const done = ph.steps > 0 && ph.done === ph.steps;
+      const node = el('div', { class: 'pnode' + (done ? ' done' : '') });
+      node.append(el('span', { class: 'pnum' }, done ? '✓' : String(ph.n).padStart(2, '0')));
+      const card = el('div', { class: 'pcard' }, el('span', { class: 'ptitle' }, ph.title));
+      if (ph.steps) card.append(el('span', { class: 'psteps' }, `${ph.done}/${ph.steps}`));
+      node.append(card);
+      rail.append(node);
+    }
+    flow.append(rail);
+  } else {
+    await renderMermaid(flow, model.flow, 'flow');
+  }
   app.append(flow);
   nav.push(['flow', 'Flow']);
 
@@ -79,9 +96,11 @@ async function render(model) {
     for (const g of model.tasks) {
       const pct = g.total ? Math.round((g.done / g.total) * 100) : 0;
       const state = pct === 100 ? 'done' : pct > 0 ? 'part' : 'zero';
-      const group = el('div', { class: 'taskgroup' });
+      const pillText = state === 'done' ? 'done' : state === 'part' ? 'in progress' : 'todo';
+      const group = el('div', { class: `taskgroup ${state}` });
       group.append(el('div', { class: 'tg-head' },
         el('span', { class: 'tg-title' }, g.heading),
+        el('span', { class: `pill ${state}` }, pillText),
         el('span', { class: 'tg-meta' }, el('b', {}, `${g.done}/${g.total}`), ` · ${pct}%`),
       ));
       const rail = el('div', { class: `rail ${state}` });

@@ -5,7 +5,7 @@ import path from 'node:path';
 import chokidar from 'chokidar';
 import open from 'open';
 import { parsePlan } from './parser.js';
-import { phasesToMermaid } from './flow.js';
+import { phasesToMermaid, buildPipeline } from './flow.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WEB = path.join(__dirname, '..', 'web');
@@ -13,7 +13,11 @@ const WEB = path.join(__dirname, '..', 'web');
 function buildModel(file) {
   const md = existsSync(file) ? readFileSync(file, 'utf8') : '';
   const model = parsePlan(md);
-  return { ...model, flow: phasesToMermaid(model.phases) };
+  return {
+    ...model,
+    flow: phasesToMermaid(model.phases),
+    pipeline: buildPipeline(model.phases, model.tasks),
+  };
 }
 
 function serveStatic(name, type, res) {

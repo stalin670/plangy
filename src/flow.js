@@ -48,3 +48,20 @@ export function phasesToMermaid(phases) {
   }
   return lines.join('\n');
 }
+
+// Structured pipeline for the custom (non-mermaid) flow renderer: the selected
+// phases as ordered nodes, each enriched with its checklist step count and
+// completion when a matching task group exists.
+export function buildPipeline(phases, tasks = []) {
+  if (!phases || phases.length === 0) return [];
+  const byHeading = new Map(tasks.map(t => [t.heading, t]));
+  return selectPhases(phases).map((p, i) => {
+    const t = byHeading.get(p.title);
+    return {
+      n: i + 1,
+      title: p.title,
+      steps: t ? t.total : 0,
+      done: t ? t.done : 0,
+    };
+  });
+}

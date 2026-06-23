@@ -13,6 +13,7 @@ test('serves parsed model as json', async () => {
   const res = await fetch(`${srv.url}/model`);
   const model = await res.json();
   assert.equal(model.phases[0].title, 'Setup');
-  assert.match(model.flow, /flowchart LR/);
+  assert.match(model.flow, /flowchart TB/);
+  assert.equal(model.pipeline[0].title, 'Setup');
   await srv.close();
 });
