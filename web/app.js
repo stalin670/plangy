@@ -45,6 +45,44 @@ function findItem(line) {
   return null;
 }
 
+// ---- version diff (vs a saved baseline) ----
+let diffMode = false;
+let currentDiff = null; // computed each render when diffMode + baseline exist
+function baselineKey() { return 'plangy-base-' + ((currentModel && currentModel.fileName) || 'plan'); }
+function taskSig(model) { return model.tasks.map(g => ({ h: g.heading, items: g.items.map(i => ({ t: i.text, c: i.checked })) })); }
+function getBaseline() { try { return JSON.parse(localStorage.getItem(baselineKey()) || 'null'); } catch { return null; } }
+function setBaseline() { if (currentModel) localStorage.setItem(baselineKey(), JSON.stringify({ at: Date.now(), tasks: taskSig(currentModel) })); }
+function clearBaseline() { localStorage.removeItem(baselineKey()); }
+
+function computeDiff() {
+  const base = getBaseline();
+  if (!base || !currentModel) return null;
+  const baseGroups = new Map(base.tasks.map(g => [g.h, g.items]));
+  const info = { at: base.at, perGroup: new Map(), added: 0, removed: 0, doneUp: 0 };
+  for (const g of currentModel.tasks) {
+    const bItems = baseGroups.get(g.heading) || [];
+    const bByText = new Map(bItems.map(i => [i.t, i]));
+    const curTexts = new Set(g.items.map(i => i.text));
+    const added = new Set(), doneChanged = new Map();
+    for (const it of g.items) {
+      const b = bByText.get(it.text);
+      if (!b) { added.add(it.text); info.added++; }
+      else if (b.c !== it.checked) { doneChanged.set(it.text, it.checked); if (it.checked) info.doneUp++; }
+    }
+    const removed = bItems.filter(i => !curTexts.has(i.t));
+    info.removed += removed.length;
+    info.perGroup.set(g.heading, { added, doneChanged, removed });
+    baseGroups.delete(g.heading);
+  }
+  for (const [h, items] of baseGroups) { info.removed += items.length; info.perGroup.set(h, { added: new Set(), doneChanged: new Map(), removed: items, gone: true }); }
+  return info;
+}
+
+const diffBtn = document.getElementById('diff');
+function syncDiffBtn() { diffBtn.classList.toggle('on', diffMode); }
+diffBtn.addEventListener('click', () => { diffMode = !diffMode; syncDiffBtn(); rerender(); });
+syncDiffBtn();
+
 const filesSel = document.getElementById('files');
 async function initFiles() {
   let list = [];
@@ -331,6 +369,31 @@ async function render(model) {
   app.append(hero);
   nav.push(['overview', 'Overview']);
 
+  // ---- Changes (diff vs baseline) ----
+  currentDiff = diffMode ? computeDiff() : null;
+  if (diffMode) {
+    const actionBtn = (label, fn, variant) => { const b = el('button', { class: 'ebtn' + (variant ? ' ' + variant : '') }, label); b.addEventListener('click', fn); return b; };
+    const cs = el('section', { id: 'changes' });
+    cs.append(el('div', { class: 'eyebrow' }, 'diff'));
+    if (!currentDiff) {
+      cs.append(el('div', { class: 'changerow' },
+        el('span', { class: 'changewhen' }, 'No baseline saved for this plan yet. Set one, then changes show up here.'),
+        actionBtn('Set baseline', () => { setBaseline(); rerender(); }, 'primary'),
+      ));
+    } else {
+      const d = currentDiff;
+      const chip = (t, c) => el('span', { class: 'dchip ' + c }, t);
+      cs.append(el('div', { class: 'changerow' },
+        el('span', { class: 'changesum' }, chip(`+${d.doneUp} done`, 'done'), chip(`${d.added} added`, 'add'), chip(`${d.removed} removed`, 'rem')),
+        el('span', { class: 'changewhen' }, `since ${new Date(d.at).toLocaleString()}`),
+        actionBtn('Re-baseline', () => { setBaseline(); rerender(); }),
+        actionBtn('Clear', () => { clearBaseline(); rerender(); }, 'ghost'),
+      ));
+    }
+    app.append(cs);
+    nav.push(['changes', 'Changes']);
+  }
+
   // ---- Flow (custom pipeline) ----
   const pipeline = model.pipeline && model.pipeline.length
     ? model.pipeline
@@ -373,6 +436,7 @@ async function render(model) {
       const rail = el('div', { class: `rail ${state}` });
       rail.append(el('span', { style: `width:${state === 'zero' ? 0 : pct}%` }));
       group.append(rail);
+      const gd = currentDiff && currentDiff.perGroup.get(g.heading);
       const items = el('div', { class: 'items' });
       for (const it of g.items) {
         const txt = el('span', { class: 'txt' }, it.text);
@@ -382,9 +446,17 @@ async function render(model) {
           txt.dataset.line = String(it.line);
           txt.dataset.orig = it.text;
         }
-        items.append(el('div', { class: 'item' + (it.checked ? ' on' : ''), 'data-search': it.text.toLowerCase(), 'data-line': it.line == null ? '' : String(it.line) },
+        let cls = 'item' + (it.checked ? ' on' : '');
+        if (gd) { if (gd.added.has(it.text)) cls += ' d-add'; else if (gd.doneChanged.has(it.text)) cls += ' d-done'; }
+        items.append(el('div', { class: cls, 'data-search': it.text.toLowerCase(), 'data-line': it.line == null ? '' : String(it.line) },
           el('span', { class: 'chk' }, it.checked ? '✓' : ''),
           txt,
+        ));
+      }
+      if (gd) for (const r of gd.removed) {
+        items.append(el('div', { class: 'item d-rem' },
+          el('span', { class: 'chk' }, r.c ? '✓' : ''),
+          el('span', { class: 'txt' }, r.t),
         ));
       }
       group.append(items);
