@@ -669,3 +669,29 @@ body.editing .item[data-line]:not([data-line=""]):hover .chk { border-color: var
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; scroll-behavior: auto; }
 }
+
+/* ---------- print / PDF ---------- */
+@media print {
+  :root {
+    --bg: #fff; --surface: #fff; --surface-2: #f5f6f8;
+    --border: #d6dbe2; --border-2: #c2c9d2;
+    --text: #14181f; --muted: #4a5462; --faint: #7a8492;
+    --accent: #1f5fd0; --accent-dim: #cdddf6;
+    --todo: #e2e6ec; --done-bg: #e6f4ea;
+  }
+  .topbar, .jump, .editbar, body::before { display: none !important; }
+  body { background: #fff; }
+  main { max-width: none; padding: 0; }
+  section { break-inside: avoid; box-shadow: none; }
+  section.collapsed > *:not(h2):not(.eyebrow) { display: revert !important; }
+  section > h2::after { content: ""; }
+  .copy, .pgo, .toggle-all { display: none !important; }
+  .code, .cmd { background: #f5f6f8; color: #14181f; border-color: #d6dbe2; }
+  .code .t-comment { color: #6a7280; }
+  .code .t-string { color: #1a7f37; }
+  .code .t-keyword { color: #8250df; }
+  .code .t-number { color: #b35900; }
+  .code .t-fn { color: #1f5fd0; }
+  .code .t-builtin { color: #0a7a8a; }
+  .code .t-flag { color: #8a6d00; }
+}

@@ -67,6 +67,12 @@ async function exportMarkdown() {
   return patchRaw(raw);
 }
 
+document.getElementById('print').addEventListener('click', () => {
+  // expand everything so nothing is clipped in the printout, then print
+  app.querySelectorAll('section.collapsed').forEach(s => s.classList.remove('collapsed'));
+  setTimeout(() => window.print(), 60);
+});
+
 const editBtn = document.getElementById('edit');
 function syncEditBtn() { editBtn.textContent = editing ? 'editing' : 'edit'; editBtn.classList.toggle('on', editing); }
 editBtn.addEventListener('click', () => {
