@@ -1,4 +1,4 @@
-# plangy — Design Spec
+# plangy - Design Spec
 
 **Date:** 2026-06-23
 **Status:** Approved (brainstorming)
@@ -7,7 +7,7 @@
 ## Problem
 
 Agents (Claude Code, codex, gemini, cursor) write a `plan.md` before implementing.
-Almost nobody reads the plan top-to-bottom — it's plain text and slow to absorb.
+Almost nobody reads the plan top-to-bottom - it's plain text and slow to absorb.
 Humans verify faster by *seeing* structure. If the plan is wrong, that's the cheapest
 moment to catch it. `plangy` turns any `plan.md` into a visual the user can scan in
 seconds, in a browser tab, refreshed live as the file changes.
@@ -17,7 +17,7 @@ seconds, in a browser tab, refreshed live as the file changes.
 - Render `plan.md` as visuals in an auto-opened browser tab.
 - Live-reload: editing the file (in editor or via agent) updates the tab instantly.
 - Deterministic, offline, zero API keys, zero auth. Works on any markdown plan.
-- Works with **any** agent — it just reads a file, agent-agnostic.
+- Works with **any** agent - it just reads a file, agent-agnostic.
 - One global install. Clean README on GitHub covering install + usage.
 
 ## Non-Goals (v1)
@@ -60,8 +60,8 @@ corrupting the user's `plan.md`.
 - **Transport:** built-in `http` + Server-Sent Events (no WebSocket lib).
 - **Frontend:** vanilla HTML/CSS/JS + vendored `mermaid.min.js` (offline).
 
-Rejected alt: single self-contained `.html` with no server — breaks live reload.
-Rejected alt: WebSocket — overkill for one-way push; SSE is simpler.
+Rejected alt: single self-contained `.html` with no server - breaks live reload.
+Rejected alt: WebSocket - overkill for one-way push; SSE is simpler.
 
 ## Parse Model
 

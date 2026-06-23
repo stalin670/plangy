@@ -42,7 +42,7 @@ async function render(model) {
     const t = section('tasks', 'Tasks');
     for (const g of model.tasks) {
       const pct = g.total ? Math.round((g.done / g.total) * 100) : 0;
-      t.append(el('h3', {}, `${g.heading} — ${g.done}/${g.total} (${pct}%)`));
+      t.append(el('h3', {}, `${g.heading} - ${g.done}/${g.total} (${pct}%)`));
       const bar = el('div', { class: 'bar' }); bar.append(el('i', { style: `width:${pct}%` }));
       t.append(bar);
       for (const it of g.items) {

@@ -11,9 +11,9 @@
 
 </div>
 
-AI agents (Claude Code, codex, cursor, gemini) write an implementation `plan.md` before they touch code — but humans skim those plain-text files instead of reading them. A diagram is scanned in seconds, so a missing step or a wrong file reference jumps out **before** any code gets written. plangy catches plan mistakes early, while they're still cheap to fix.
+AI agents (Claude Code, codex, cursor, gemini) write an implementation `plan.md` before they touch code - but humans skim those plain-text files instead of reading them. A diagram is scanned in seconds, so a missing step or a wrong file reference jumps out **before** any code gets written. plangy catches plan mistakes early, while they're still cheap to fix.
 
-Point it at any markdown plan and it opens a browser tab with the plan rendered as a flow diagram, task-progress bars, a file map, and native charts/tables — auto-refreshing as you edit the file.
+Point it at any markdown plan and it opens a browser tab with the plan rendered as a flow diagram, task-progress bars, a file map, and native charts/tables - auto-refreshing as you edit the file.
 
 ---
 
@@ -41,17 +41,17 @@ Point it at any markdown plan and it opens a browser tab with the plan rendered 
 ![plangy demo](docs/demo.gif)
 -->
 
-_Demo gif coming soon._ For now, run `plangy examples/plan.md` after installing — the bundled example shows every panel.
+_Demo gif coming soon._ For now, run `plangy examples/plan.md` after installing - the bundled example shows every panel.
 
 ## Features
 
-- 📊 **Flow diagram** — headings + numbered steps become a left-to-right pipeline.
-- ✅ **Task progress** — `- [ ]` / `- [x]` checklists become progress bars with done/total counts.
-- 🗂️ **File map** — file paths in the plan are collected into a tree, each linked to the phase that mentions it.
-- 📈 **Native rendering** — existing ` ```mermaid ` blocks and markdown tables render as real charts/tables.
-- 🔁 **Live reload** — edit the file in your editor or via your agent; the tab updates instantly.
-- 🔌 **Agent-agnostic** — it just reads a file, so it works with any tool that writes a plan.
-- 🛡️ **Offline & safe** — deterministic parse, no LLM, no API keys, no network, and it **never writes to your file**.
+- 📊 **Flow diagram** - headings + numbered steps become a left-to-right pipeline.
+- ✅ **Task progress** - `- [ ]` / `- [x]` checklists become progress bars with done/total counts.
+- 🗂️ **File map** - file paths in the plan are collected into a tree, each linked to the phase that mentions it.
+- 📈 **Native rendering** - existing ` ```mermaid ` blocks and markdown tables render as real charts/tables.
+- 🔁 **Live reload** - edit the file in your editor or via your agent; the tab updates instantly.
+- 🔌 **Agent-agnostic** - it just reads a file, so it works with any tool that writes a plan.
+- 🛡️ **Offline & safe** - deterministic parse, no LLM, no API keys, no network, and it **never writes to your file**.
 
 ## Requirements
 
@@ -108,7 +108,7 @@ plangy path/to/plan.md
 plangy examples/plan.md
 ```
 
-A browser tab opens at `http://127.0.0.1:7331`. Leave it open — it refreshes itself whenever the file changes. Press `Ctrl-C` in the terminal to stop.
+A browser tab opens at `http://127.0.0.1:7331`. Leave it open - it refreshes itself whenever the file changes. Press `Ctrl-C` in the terminal to stop.
 
 ## Usage
 
@@ -146,7 +146,7 @@ plangy plan.md --no-open        # don't auto-open; just print the URL
 
 ## Use with any agent
 
-plangy just reads a markdown file, so it works with anything that writes one — Claude Code, Codex, Cursor, Gemini, or your own scripts. The terminal command works everywhere:
+plangy just reads a markdown file, so it works with anything that writes one - Claude Code, Codex, Cursor, Gemini, or your own scripts. The terminal command works everywhere:
 
 ```bash
 plangy plan.md          # or: npx plangy plan.md
@@ -154,11 +154,11 @@ plangy plan.md          # or: npx plangy plan.md
 
 The richer `/plangy` slash command (visualize the plan from your last response) is available as a **Claude Code plugin** below. For other agents, use the CLI directly.
 
-### Claude Code — install the `/plangy` plugin
+### Claude Code - install the `/plangy` plugin
 
 This adds a `/plangy` command and lists plangy under `/plugins`.
 
-**1. Add the marketplace** (one time — registers where to find the plugin):
+**1. Add the marketplace** (one time - registers where to find the plugin):
 
 ```
 /plugin marketplace add stalin670/plangy
@@ -194,7 +194,7 @@ With no argument, `/plangy` visualizes the plan in the **last response**: if tha
 /plugin update plangy@plangy
 ```
 
-### Codex — run after the plan is written
+### Codex - run after the plan is written
 
 Codex has no Claude-style plugin marketplace, so use the CLI. After Codex writes the plan, run in your terminal:
 
@@ -206,7 +206,7 @@ Or wire it into your workflow with a shell alias / task so it runs automatically
 
 ### Cursor, Gemini, and others
 
-Same pattern — these agents write a plan file, then you run the CLI:
+Same pattern - these agents write a plan file, then you run the CLI:
 
 ```bash
 plangy plan.md          # installed globally
@@ -221,7 +221,7 @@ Don't want to install the plugin? Drop the command in by hand. Create `.claude/c
 
 ## How it works
 
-1. plangy parses your markdown **deterministically** — no LLM, no API keys.
+1. plangy parses your markdown **deterministically** - no LLM, no API keys.
 2. The parse becomes a structured model of phases, steps, tasks, files, tables, and notes.
 3. A local server starts on `127.0.0.1` (default port `7331`).
 4. Your browser renders the model as collapsible panels.
@@ -250,14 +250,14 @@ Your global npm bin folder isn't on `PATH`. Find it with `npm bin -g` and add th
 plangy auto-picks the next free port. To force one, use `--port`, e.g. `plangy plan.md --port 8080`.
 
 **Browser didn't open**
-Some environments block auto-open. The URL is always printed in the terminal — open it manually, or pass `--no-open` and copy the link.
+Some environments block auto-open. The URL is always printed in the terminal - open it manually, or pass `--no-open` and copy the link.
 
 **Mermaid block shows an error**
-The diagram syntax in your plan is invalid. plangy shows the error inline instead of crashing the whole view — fix the mermaid block in your `.md`.
+The diagram syntax in your plan is invalid. plangy shows the error inline instead of crashing the whole view - fix the mermaid block in your `.md`.
 
 ## Roadmap
 
-- **v2** — edit the visuals in-browser and export an updated `.md` to hand back to the agent (two-way sync).
+- **v2** - edit the visuals in-browser and export an updated `.md` to hand back to the agent (two-way sync).
 - Themes, PNG/SVG export, and multi-file plans.
 
 ## Contributing

@@ -1,13 +1,13 @@
 We're adding a "saved searches" feature to the app so users can name a filter set and return to it later. The work splits into a backend phase (storage + API) and a frontend phase (UI + state). Keep migrations reversible and ship behind a feature flag until the UI is wired up.
 
-# Phase 1 — Backend
+# Phase 1 - Backend
 
 1. Add a `saved_searches` table with `id`, `user_id`, `name`, `query_json`, and `created_at`.
 2. Write the migration and a matching rollback in `src/db/migrations.js`.
 3. Expose CRUD routes (`list`, `create`, `delete`) in `src/server.js`.
 4. Validate the incoming `query_json` payload in `src/validate.js` before it hits the database.
 
-## Phase 2 — Frontend
+## Phase 2 - Frontend
 
 1. Add a "Save this search" button to the filter bar in `web/app.js`.
 2. Fetch and render the saved list in a sidebar panel.

@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "plangy",
-      "description": "Type /plangy to open the current plan.md as live visuals in your browser — flow diagrams, task progress, file maps.",
+      "description": "Type /plangy to open the current plan.md as live visuals in your browser - flow diagrams, task progress, file maps.",
       "source": "./plugin",
       "category": "productivity"
     }

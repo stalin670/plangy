@@ -1,6 +1,6 @@
 {
   "name": "plangy",
-  "description": "Visualize the plan from your last response (or a file) as live browser diagrams — flow, task progress, file maps. Wraps the plangy CLI.",
+  "description": "Visualize the plan from your last response (or a file) as live browser diagrams - flow, task progress, file maps. Wraps the plangy CLI.",
   "version": "0.1.1",
   "author": {
     "name": "stalin670",
