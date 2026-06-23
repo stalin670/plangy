@@ -1,0 +1,11 @@
+{
+  "name": "plangy",
+  "description": "Open the current plan.md as live browser visuals — flow diagrams, task progress, file maps. Wraps the plangy CLI.",
+  "version": "0.1.0",
+  "author": {
+    "name": "stalin670",
+    "url": "https://github.com/stalin670"
+  },
+  "homepage": "https://github.com/stalin670/plangy",
+  "license": "MIT"
+}

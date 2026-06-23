@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "plangy",
+  "description": "Visualize agent plan.md files as live, auto-reloading diagrams in your browser.",
+  "owner": {
+    "name": "stalin670",
+    "url": "https://github.com/stalin670"
+  },
+  "plugins": [
+    {
+      "name": "plangy",
+      "description": "Type /plangy to open the current plan.md as live visuals in your browser — flow diagrams, task progress, file maps.",
+      "source": "./plugin",
+      "category": "productivity"
+    }
+  ]
+}
