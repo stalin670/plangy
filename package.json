@@ -1,6 +1,6 @@
 {
   "name": "plangy",
-  "version": "0.6.10",
+  "version": "0.6.11",
   "description": "Turn any plan.md into live-reloading visuals in your browser.",
   "type": "module",
   "bin": {
