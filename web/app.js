@@ -633,10 +633,15 @@ async function render(model) {
     card.classList.add('linked');
     card.append(el('span', { class: 'pgo' }, '→'));
     const go = () => {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      target.classList.remove('flash');
-      void target.offsetWidth; // restart animation
-      target.classList.add('flash');
+      // expand the Tasks panel if collapsed, otherwise the target is display:none
+      const sec = target.closest('section');
+      if (sec && sec.classList.contains('collapsed')) { sec.classList.remove('collapsed'); persistCollapse(); }
+      requestAnimationFrame(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        target.classList.remove('flash');
+        void target.offsetWidth; // restart animation
+        target.classList.add('flash');
+      });
     };
     card.addEventListener('click', go);
     card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
