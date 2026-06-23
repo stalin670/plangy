@@ -78,8 +78,23 @@ body::before {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.live {
+#search {
   margin-left: auto;
+  width: min(280px, 32vw);
+  font-family: var(--mono);
+  font-size: .8rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .35rem .7rem;
+  outline: none;
+}
+#search:focus { border-color: var(--accent-dim); box-shadow: 0 0 0 3px rgba(90,162,255,.12); }
+#search::placeholder { color: var(--faint); }
+
+.live {
+  display: inline-flex;
   display: inline-flex;
   align-items: center;
   gap: .45rem;
@@ -553,6 +568,10 @@ td code { font-family: var(--mono); font-size: .85em; color: var(--accent); }
 .oitem { display: flex; align-items: baseline; gap: .6rem; padding: .2rem .3rem; border-radius: 5px; font-size: .9rem; }
 .oitem:hover { background: var(--surface-2); }
 .oitem .odepth { font-family: var(--mono); font-size: .62rem; color: var(--faint); flex: none; width: 1.4rem; }
+
+/* ---------- filtering ---------- */
+.hide { display: none !important; }
+.dim { opacity: .35; transition: opacity .15s ease; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 640px) {

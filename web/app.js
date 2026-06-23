@@ -128,7 +128,7 @@ async function render(model) {
     const rail = el('div', { class: 'pipeline' });
     for (const ph of pipeline) {
       const done = ph.steps > 0 && ph.done === ph.steps;
-      const node = el('div', { class: 'pnode' + (done ? ' done' : '') });
+      const node = el('div', { class: 'pnode' + (done ? ' done' : ''), 'data-search': ph.title.toLowerCase() });
       node.append(el('span', { class: 'pnum' }, done ? '✓' : String(ph.n).padStart(2, '0')));
       const card = el('div', { class: 'pcard', 'data-phase': ph.title, role: 'button', tabindex: '0' }, el('span', { class: 'ptitle' }, ph.title));
       if (ph.deps && ph.deps.length) card.append(el('span', { class: 'pdep' }, `after ${ph.deps.join(', ')}`));
@@ -163,7 +163,7 @@ async function render(model) {
       group.append(rail);
       const items = el('div', { class: 'items' });
       for (const it of g.items) {
-        items.append(el('div', { class: 'item' + (it.checked ? ' on' : '') },
+        items.append(el('div', { class: 'item' + (it.checked ? ' on' : ''), 'data-search': it.text.toLowerCase() },
           el('span', { class: 'chk' }, it.checked ? '✓' : ''),
           el('span', { class: 'txt' }, it.text),
         ));
@@ -182,7 +182,7 @@ async function render(model) {
       const block = el('div', { class: 'cmdblock' });
       block.append(copyBtn(() => model.commands.join('\n')));
       const pre = el('pre', { class: 'cmd' });
-      for (const cmd of model.commands) pre.append(el('span', { class: 'cmdline' }, el('span', { class: 'prompt' }, '$ '), cmd));
+      for (const cmd of model.commands) pre.append(el('span', { class: 'cmdline', 'data-search': cmd.toLowerCase() }, el('span', { class: 'prompt' }, '$ '), cmd));
       block.append(pre);
       c.append(block);
     }
@@ -221,7 +221,7 @@ async function render(model) {
     const f = section('files', 'change map', 'Files', `${model.files.length} files`);
     const list = el('div', { class: 'files' });
     for (const fr of model.files) {
-      const row = el('div', { class: 'file' }, filePath(fr.path));
+      const row = el('div', { class: 'file', 'data-search': fr.path.toLowerCase() }, filePath(fr.path));
       if (fr.phaseTitle) row.append(el('span', { class: 'chip' }, fr.phaseTitle));
       list.append(row);
     }
@@ -275,7 +275,7 @@ async function render(model) {
     const minDepth = Math.min(...model.outline.map(h => h.depth));
     const list = el('div', { class: 'outline' });
     for (const h of model.outline) {
-      list.append(el('div', { class: 'oitem', style: `padding-left:${(h.depth - minDepth) * 1.1}rem` },
+      list.append(el('div', { class: 'oitem', 'data-search': h.title.toLowerCase(), style: `padding-left:${(h.depth - minDepth) * 1.1}rem` },
         el('span', { class: 'odepth' }, 'H' + h.depth),
         el('span', {}, h.title),
       ));
@@ -321,10 +321,41 @@ async function render(model) {
   sync();
 }
 
+const searchEl = document.getElementById('search');
+
+function applyFilter() {
+  const q = (searchEl.value || '').trim().toLowerCase();
+  app.querySelectorAll('[data-search]').forEach(r => {
+    r.classList.toggle('hide', !!q && !r.getAttribute('data-search').includes(q));
+  });
+  // hide task groups with no visible items
+  app.querySelectorAll('.taskgroup').forEach(g => {
+    const anyVisible = [...g.querySelectorAll('.item')].some(i => !i.classList.contains('hide'));
+    g.classList.toggle('hide', !!q && !anyVisible);
+  });
+  // hide whole sections (except hero) that have no visible rows
+  app.querySelectorAll('section:not(.hero)').forEach(s => {
+    const rows = s.querySelectorAll('[data-search]');
+    if (!rows.length) { s.classList.toggle('dim', !!q); return; }
+    const anyVisible = [...rows].some(r => !r.classList.contains('hide'));
+    s.classList.toggle('hide', !!q && !anyVisible);
+  });
+  // expand collapsed sections while searching so matches are visible
+  if (q) app.querySelectorAll('section.collapsed').forEach(s => s.classList.remove('collapsed'));
+  document.body.classList.toggle('filtering', !!q);
+}
+
+searchEl.addEventListener('input', applyFilter);
+searchEl.addEventListener('keydown', e => { if (e.key === 'Escape') { searchEl.value = ''; applyFilter(); searchEl.blur(); } });
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== searchEl) { e.preventDefault(); searchEl.focus(); }
+});
+
 async function load() {
   try {
     const model = await fetch('/model').then(r => r.json());
     await render(model);
+    applyFilter();
     statusEl.classList.remove('stale');
   } catch (e) {
     statusEl.classList.add('stale');
