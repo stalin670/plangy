@@ -15,6 +15,6 @@ test('web assets exist', () => {
 
 test('app.js fetches model and listens to events', () => {
   const js = readFileSync(web('app.js'), 'utf8');
-  assert.match(js, /fetch\(['"]\/model['"]\)/);
+  assert.match(js, /fetch\([`'"]\/model/);
   assert.match(js, /EventSource\(['"]\/events['"]\)/);
 });

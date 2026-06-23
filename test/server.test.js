@@ -19,3 +19,19 @@ test('serves parsed model as json', async () => {
   assert.match(raw, /# Setup/);
   await srv.close();
 });
+
+test('serves multiple files with a switcher and per-file models', async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'plangy-multi-'));
+  const a = path.join(dir, 'a.md');
+  const b = path.join(dir, 'b.md');
+  writeFileSync(a, '# Alpha\n1. x');
+  writeFileSync(b, '# Beta\n1. y');
+  const srv = await startServer({ files: [a, b], port: 0, openBrowser: false });
+  const files = await fetch(`${srv.url}/files`).then(r => r.json());
+  assert.deepEqual(files.map(f => f.name), ['a.md', 'b.md']);
+  const m0 = await fetch(`${srv.url}/model?i=0`).then(r => r.json());
+  const m1 = await fetch(`${srv.url}/model?i=1`).then(r => r.json());
+  assert.equal(m0.phases[0].title, 'Alpha');
+  assert.equal(m1.phases[0].title, 'Beta');
+  await srv.close();
+});

@@ -40,23 +40,34 @@ function serveStatic(name, type, res) {
   }
 }
 
-export function startServer({ file, port = 7331, openBrowser = true }) {
+export function startServer({ file, files, port = 7331, openBrowser = true }) {
+  const list = (files && files.length) ? files : [file || 'plan.md'];
+  const pick = (req) => {
+    const u = new URL(req.url, 'http://localhost');
+    const i = parseInt(u.searchParams.get('i') || '0', 10) || 0;
+    return { pathname: u.pathname, file: list[Math.max(0, Math.min(list.length - 1, i))] };
+  };
   const clients = new Set();
 
   const server = http.createServer((req, res) => {
-    if (req.url === '/' ) return serveStatic('app.html', 'text/html', res);
-    if (req.url === '/app.js') return serveStatic('app.js', 'text/javascript', res);
-    if (req.url === '/app.css') return serveStatic('app.css', 'text/css', res);
-    if (req.url === '/mermaid.min.js') return serveStatic('mermaid.min.js', 'text/javascript', res);
-    if (req.url === '/model') {
+    const { pathname, file: cur } = pick(req);
+    if (pathname === '/') return serveStatic('app.html', 'text/html', res);
+    if (pathname === '/app.js') return serveStatic('app.js', 'text/javascript', res);
+    if (pathname === '/app.css') return serveStatic('app.css', 'text/css', res);
+    if (pathname === '/mermaid.min.js') return serveStatic('mermaid.min.js', 'text/javascript', res);
+    if (pathname === '/files') {
       res.writeHead(200, { 'content-type': 'application/json' });
-      return res.end(JSON.stringify(buildModel(file)));
+      return res.end(JSON.stringify(list.map((f, i) => ({ i, name: path.basename(f) }))));
     }
-    if (req.url === '/raw') {
+    if (pathname === '/model') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      return res.end(JSON.stringify(buildModel(cur)));
+    }
+    if (pathname === '/raw') {
       res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
-      return res.end(existsSync(file) ? readFileSync(file, 'utf8') : '');
+      return res.end(existsSync(cur) ? readFileSync(cur, 'utf8') : '');
     }
-    if (req.url === '/events') {
+    if (pathname === '/events') {
       res.writeHead(200, {
         'content-type': 'text/event-stream',
         'cache-control': 'no-cache',
@@ -71,7 +82,7 @@ export function startServer({ file, port = 7331, openBrowser = true }) {
     res.end('not found');
   });
 
-  const watcher = chokidar.watch(file, { ignoreInitial: true });
+  const watcher = chokidar.watch(list, { ignoreInitial: true });
   watcher.on('all', () => {
     for (const c of clients) c.write('event: update\ndata: {}\n\n');
   });

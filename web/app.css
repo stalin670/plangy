@@ -102,6 +102,19 @@ body::before {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.files-sel {
+  font-family: var(--mono);
+  font-size: .78rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .32rem .6rem;
+  cursor: pointer;
+  max-width: 240px;
+}
+.files-sel:hover { border-color: var(--accent-dim); }
+
 #search {
   margin-left: auto;
   width: min(280px, 32vw);

@@ -34,8 +34,27 @@ syncThemeBtn();
 
 // ---- edit mode + export ----
 let currentModel = null;
+let currentFile = 0; // index when multiple plan files are served
 let editing = false;
 const pending = new Map(); // source line -> checked boolean
+
+const filesSel = document.getElementById('files');
+async function initFiles() {
+  let list = [];
+  try { list = await fetch('/files').then(r => r.json()); } catch { /* single-file fallback */ }
+  if (list.length > 1) {
+    filesSel.innerHTML = '';
+    for (const f of list) filesSel.append(el('option', { value: String(f.i) }, f.name));
+    filesSel.hidden = false;
+    filesSel.addEventListener('change', () => {
+      currentFile = Number(filesSel.value);
+      pending.clear(); // edits are per-file
+      load();
+    });
+  } else {
+    filesSel.hidden = true;
+  }
+}
 
 function applyPending() {
   if (!currentModel) return;
@@ -63,7 +82,7 @@ function patchRaw(raw) {
   return lines.join('\n');
 }
 async function exportMarkdown() {
-  const raw = await fetch('/raw').then(r => r.text());
+  const raw = await fetch(`/raw?i=${currentFile}`).then(r => r.text());
   return patchRaw(raw);
 }
 
@@ -519,7 +538,7 @@ document.addEventListener('keydown', e => {
 
 async function load() {
   try {
-    const model = await fetch('/model').then(r => r.json());
+    const model = await fetch(`/model?i=${currentFile}`).then(r => r.json());
     currentModel = model;
     applyPending();
     await render(model);
@@ -535,4 +554,4 @@ const es = new EventSource('/events');
 es.addEventListener('update', () => { statusEl.classList.add('stale'); load(); });
 es.onerror = () => statusEl.classList.add('stale');
 
-load();
+initFiles().then(load);

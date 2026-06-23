@@ -50,6 +50,12 @@ _Demo gif coming soon._ For now, run `plangy examples/plan.md` after installing 
 - 🗂️ **File map** - file paths in the plan are collected into a tree, each linked to the phase that mentions it.
 - 📈 **Native rendering** - existing ` ```mermaid ` blocks and markdown tables render as real charts/tables.
 - 🔁 **Live reload** - edit the file in your editor or via your agent; the tab updates instantly.
+- 📊 **Overview** - title, metadata (Goal/Architecture/Tech Stack), a stats bar, and a progress ring.
+- ⌨️ **Commands & code** - extracted command list, commit sequence, and syntax-highlighted code blocks.
+- 🔎 **Navigate** - outline, live filter (`/` to focus), click a phase to jump to its tasks, collapse-all.
+- ✏️ **Edit & export** - toggle tasks in the visual and copy/download the updated `.md` (lossless line patches; your file is never written).
+- 🖨️ **Print / PDF** and **light/dark** theme, both persisted.
+- 🗂️ **Multi-file** - pass several plans or a directory and switch between them.
 - 🔌 **Agent-agnostic** - it just reads a file, so it works with any tool that writes a plan.
 - 🛡️ **Offline & safe** - deterministic parse, no LLM, no API keys, no network, and it **never writes to your file**.
 
@@ -113,10 +119,10 @@ A browser tab opens at `http://127.0.0.1:7331`. Leave it open - it refreshes its
 ## Usage
 
 ```
-plangy [file]
+plangy [files...]
 
 Arguments:
-  file               markdown plan file (default: "plan.md")
+  files              markdown plan file(s), or a directory of .md files (default: "plan.md")
 
 Options:
   -p, --port <port>  preferred port (default: 7331; auto-picks the next free port if busy)
@@ -130,6 +136,8 @@ Examples:
 ```bash
 plangy                          # render ./plan.md
 plangy docs/feature-plan.md     # render a specific file
+plangy a.md b.md c.md           # several plans, switch between them in the tab
+plangy docs/plans/              # a whole directory of .md files
 plangy plan.md --port 8080      # use a specific port
 plangy plan.md --no-open        # don't auto-open; just print the URL
 ```
