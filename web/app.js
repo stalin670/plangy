@@ -61,6 +61,19 @@ function filePath(p) {
   return el('span', { class: 'path' }, el('span', { class: 'dir' }, p.slice(0, i + 1)), p.slice(i + 1));
 }
 
+function progressRing(pct) {
+  const r = 34;
+  const circ = (2 * Math.PI * r).toFixed(1);
+  const offset = (2 * Math.PI * r * (1 - pct / 100)).toFixed(1);
+  return `<svg viewBox="0 0 80 80" class="ring" role="img" aria-label="${pct}% complete">
+    <circle class="ring-track" cx="40" cy="40" r="${r}"></circle>
+    <circle class="ring-bar${pct === 100 ? ' full' : ''}" cx="40" cy="40" r="${r}"
+      stroke-dasharray="${circ}" stroke-dashoffset="${offset}"></circle>
+    <text x="40" y="38" class="ring-pct">${pct}%</text>
+    <text x="40" y="52" class="ring-sub">done</text>
+  </svg>`;
+}
+
 function copyBtn(getText) {
   const b = el('button', { class: 'copy', title: 'Copy' }, 'copy');
   b.addEventListener('click', async () => {
@@ -76,12 +89,13 @@ async function render(model) {
   const stats = model.stats || {};
   const meta = { ...(model.frontmatter || {}), ...(model.meta || {}) };
 
-  // ---- Overview (title, stats, metadata) ----
+  // ---- Overview (title, stats, metadata, progress ring) ----
   const h1 = (model.phases || []).find(p => p.depth === 1);
   const title = meta.title || (h1 && h1.title) || 'Plan';
   const hero = el('section', { class: 'hero', id: 'overview' });
-  hero.append(el('div', { class: 'eyebrow' }, 'plan'));
-  hero.append(el('h1', { class: 'hero-title' }, title));
+  const main = el('div', { class: 'hero-main' });
+  main.append(el('div', { class: 'eyebrow' }, 'plan'));
+  main.append(el('h1', { class: 'hero-title' }, title));
   const statRow = el('div', { class: 'stats' });
   const stat = (n, l) => el('div', { class: 'stat' }, el('span', { class: 'sv' }, String(n)), el('span', { class: 'sl' }, l));
   if (stats.tasks) statRow.append(stat(stats.tasks, 'tasks'));
@@ -89,13 +103,19 @@ async function render(model) {
   if (stats.files) statRow.append(stat(stats.files, 'files'));
   if (stats.code) statRow.append(stat(stats.code, 'code'));
   if (stats.diagrams) statRow.append(stat(stats.diagrams, 'diagrams'));
-  if (statRow.childNodes.length) hero.append(statRow);
+  if (statRow.childNodes.length) main.append(statRow);
   const mkeys = Object.keys(meta).filter(k => k.toLowerCase() !== 'title');
   if (mkeys.length) {
     const grid = el('div', { class: 'meta' });
     for (const k of mkeys) grid.append(el('div', { class: 'mrow' }, el('span', { class: 'mk' }, k), el('span', { class: 'mv' }, meta[k])));
-    hero.append(grid);
+    main.append(grid);
   }
+  const top = el('div', { class: 'hero-top' }, main);
+  if (stats.steps) {
+    const pct = Math.round((stats.done / stats.steps) * 100);
+    top.append(el('div', { class: 'hero-ring', html: progressRing(pct) }));
+  }
+  hero.append(top);
   app.append(hero);
   nav.push(['overview', 'Overview']);
 
@@ -283,9 +303,22 @@ async function render(model) {
     card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
   });
 
-  // ---- Nav ----
+  // ---- Nav + collapse-all toggle ----
   navEl.innerHTML = '';
   for (const [id, label] of nav) navEl.append(el('a', { href: `#${id}` }, label));
+  const collapsibles = () => [...app.querySelectorAll('section:not(.hero)')];
+  const toggle = el('button', { class: 'toggle-all' }, 'collapse all');
+  const sync = () => {
+    const allClosed = collapsibles().every(s => s.classList.contains('collapsed'));
+    toggle.textContent = allClosed ? 'expand all' : 'collapse all';
+  };
+  toggle.addEventListener('click', () => {
+    const collapse = !collapsibles().every(s => s.classList.contains('collapsed'));
+    collapsibles().forEach(s => s.classList.toggle('collapsed', collapse));
+    sync();
+  });
+  navEl.append(toggle);
+  sync();
 }
 
 async function load() {

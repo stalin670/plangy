@@ -127,6 +127,20 @@ body::before {
   border: 1px solid transparent;
 }
 .jump a:hover { color: var(--text); background: var(--surface-2); border-color: var(--border); }
+.toggle-all {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: .3rem .7rem;
+  cursor: pointer;
+}
+.toggle-all:hover { color: var(--text); border-color: var(--accent-dim); }
 
 /* ---------- layout ---------- */
 main {
@@ -400,6 +414,23 @@ td code { font-family: var(--mono); font-size: .85em; color: var(--accent); }
 
 /* ---------- hero / overview ---------- */
 .hero { background: linear-gradient(180deg, var(--surface) 0%, var(--surface) 70%, rgba(90,162,255,.04) 100%); }
+.hero-top { display: flex; gap: 1.5rem; align-items: flex-start; justify-content: space-between; }
+.hero-main { flex: 1; min-width: 0; }
+.hero-ring { flex: none; }
+.ring { width: 104px; height: 104px; }
+.ring-track { fill: none; stroke: var(--todo); stroke-width: 7; }
+.ring-bar {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 7;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 40px 40px;
+  transition: stroke-dashoffset .6s ease;
+}
+.ring-bar.full { stroke: var(--done); }
+.ring-pct { fill: var(--text); font-family: var(--mono); font-size: 16px; font-weight: 700; text-anchor: middle; }
+.ring-sub { fill: var(--faint); font-family: var(--mono); font-size: 7px; letter-spacing: .12em; text-anchor: middle; text-transform: uppercase; }
 .hero-title {
   margin: .1rem 0 1rem;
   font-size: 1.9rem;
@@ -529,6 +560,8 @@ td code { font-family: var(--mono); font-size: .85em; color: var(--accent); }
   section { padding: 1.15rem 1.1rem 1.3rem; }
   .topbar, .jump { padding-left: 1rem; padding-right: 1rem; }
   #filename { display: none; }
+  .hero-top { flex-direction: column-reverse; align-items: flex-start; }
+  .hero-ring { align-self: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {
