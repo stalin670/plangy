@@ -632,9 +632,22 @@ td code { font-family: var(--mono); font-size: .85em; color: var(--accent); }
 
 /* ---------- edit mode + export ---------- */
 .iconbtn.on { color: var(--accent); border-color: var(--accent-dim); background: var(--accent-dim); }
-body.editing .item[data-line]:not([data-line=""]) { cursor: pointer; }
-body.editing .item[data-line]:not([data-line=""]):hover { background: var(--surface-2); }
+body.editing .item[data-line]:not([data-line=""]) .chk { cursor: pointer; }
 body.editing .item[data-line]:not([data-line=""]):hover .chk { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(90,162,255,.12); }
+body.editing .txt[contenteditable="true"] {
+  cursor: text;
+  border-radius: 4px;
+  padding: 0 .2rem;
+  margin: 0 -.2rem;
+  outline: 1px dashed transparent;
+}
+body.editing .txt[contenteditable="true"]:hover { outline-color: var(--border-2); }
+body.editing .txt[contenteditable="true"]:focus {
+  outline: 1px solid var(--accent);
+  background: var(--surface-2);
+  color: var(--text);
+  text-decoration: none;
+}
 
 .editbar {
   position: fixed;

@@ -36,7 +36,14 @@ syncThemeBtn();
 let currentModel = null;
 let currentFile = 0; // index when multiple plan files are served
 let editing = false;
-const pending = new Map(); // source line -> checked boolean
+const pending = new Map();     // source line -> checked boolean
+const pendingText = new Map(); // source line -> new task text
+
+function findItem(line) {
+  if (!currentModel) return null;
+  for (const g of currentModel.tasks) for (const it of g.items) if (it.line === line) return it;
+  return null;
+}
 
 const filesSel = document.getElementById('files');
 async function initFiles() {
@@ -48,7 +55,7 @@ async function initFiles() {
     filesSel.hidden = false;
     filesSel.addEventListener('change', () => {
       currentFile = Number(filesSel.value);
-      pending.clear(); // edits are per-file
+      pending.clear(); pendingText.clear(); // edits are per-file
       load();
     });
   } else {
@@ -75,6 +82,11 @@ function rerender() {
 
 function patchRaw(raw) {
   const lines = raw.split(/\r?\n/);
+  for (const [line, text] of pendingText) {
+    const i = line - 1;
+    // keep the bullet + checkbox prefix, replace the text after it
+    if (i >= 0 && i < lines.length) lines[i] = lines[i].replace(/^(\s*[-*+]\s*\[[ xX]\]\s*).*$/, (m, p1) => p1 + text);
+  }
   for (const [line, checked] of pending) {
     const i = line - 1;
     if (i >= 0 && i < lines.length) lines[i] = lines[i].replace(/\[( |x|X)\]/, checked ? '[x]' : '[ ]');
@@ -98,19 +110,37 @@ editBtn.addEventListener('click', () => {
   editing = !editing;
   document.body.classList.toggle('editing', editing);
   syncEditBtn();
+  rerender(); // toggle contenteditable / checkbox affordances
   updateEditbar();
 });
 
 // clicking a task checkbox while editing toggles it (tracked by source line)
 app.addEventListener('click', e => {
   if (!editing) return;
-  const item = e.target.closest('.item[data-line]');
+  const chk = e.target.closest('.chk');
+  if (!chk) return;
+  const item = chk.closest('.item[data-line]');
   if (!item) return;
   const line = Number(item.getAttribute('data-line'));
   if (!line) return;
   pending.set(line, !item.classList.contains('on'));
   applyPending();
   rerender();
+  updateEditbar();
+});
+
+// editing a task's text (contenteditable) is tracked on blur
+app.addEventListener('focusout', e => {
+  if (!editing) return;
+  const txt = e.target.closest('.txt[contenteditable="true"]');
+  if (!txt) return;
+  const line = Number(txt.dataset.line);
+  const next = txt.textContent.replace(/\s+/g, ' ').trim();
+  if (!line || next === txt.dataset.orig) return;
+  pendingText.set(line, next);
+  const it = findItem(line);
+  if (it) it.text = next;
+  txt.dataset.orig = next;
   updateEditbar();
 });
 
@@ -131,11 +161,11 @@ btnDownload.addEventListener('click', async () => {
   a.click();
   URL.revokeObjectURL(a.href);
 });
-btnReset.addEventListener('click', () => { pending.clear(); load(); updateEditbar(); });
+btnReset.addEventListener('click', () => { pending.clear(); pendingText.clear(); load(); updateEditbar(); });
 editbar.append(editcount, btnReset, btnDownload, btnCopy);
 document.body.append(editbar);
 function updateEditbar() {
-  const n = pending.size;
+  const n = pending.size + pendingText.size;
   editcount.textContent = `${n} edit${n === 1 ? '' : 's'}`;
   editbar.classList.toggle('show', editing);
 }
@@ -345,9 +375,16 @@ async function render(model) {
       group.append(rail);
       const items = el('div', { class: 'items' });
       for (const it of g.items) {
+        const txt = el('span', { class: 'txt' }, it.text);
+        if (editing && it.line != null) {
+          txt.setAttribute('contenteditable', 'true');
+          txt.setAttribute('spellcheck', 'false');
+          txt.dataset.line = String(it.line);
+          txt.dataset.orig = it.text;
+        }
         items.append(el('div', { class: 'item' + (it.checked ? ' on' : ''), 'data-search': it.text.toLowerCase(), 'data-line': it.line == null ? '' : String(it.line) },
           el('span', { class: 'chk' }, it.checked ? '✓' : ''),
-          el('span', { class: 'txt' }, it.text),
+          txt,
         ));
       }
       group.append(items);
