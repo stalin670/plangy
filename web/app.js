@@ -110,7 +110,7 @@ async function render(model) {
       const done = ph.steps > 0 && ph.done === ph.steps;
       const node = el('div', { class: 'pnode' + (done ? ' done' : '') });
       node.append(el('span', { class: 'pnum' }, done ? '✓' : String(ph.n).padStart(2, '0')));
-      const card = el('div', { class: 'pcard' }, el('span', { class: 'ptitle' }, ph.title));
+      const card = el('div', { class: 'pcard', 'data-phase': ph.title, role: 'button', tabindex: '0' }, el('span', { class: 'ptitle' }, ph.title));
       if (ph.deps && ph.deps.length) card.append(el('span', { class: 'pdep' }, `after ${ph.deps.join(', ')}`));
       if (ph.steps) card.append(el('span', { class: 'psteps' }, `${ph.done}/${ph.steps}`));
       node.append(card);
@@ -132,7 +132,7 @@ async function render(model) {
       const pct = g.total ? Math.round((g.done / g.total) * 100) : 0;
       const state = pct === 100 ? 'done' : pct > 0 ? 'part' : 'zero';
       const pillText = state === 'done' ? 'done' : state === 'part' ? 'in progress' : 'todo';
-      const group = el('div', { class: `taskgroup ${state}` });
+      const group = el('div', { class: `taskgroup ${state}`, id: `tg-${g.id}`, 'data-heading': g.heading });
       group.append(el('div', { class: 'tg-head' },
         el('span', { class: 'tg-title' }, g.heading),
         el('span', { class: `pill ${state}` }, pillText),
@@ -264,6 +264,24 @@ async function render(model) {
     app.append(o);
     nav.push(['outline', 'Outline']);
   }
+
+  // ---- Link pipeline cards to their task group ----
+  const tgMap = new Map();
+  app.querySelectorAll('.taskgroup[data-heading]').forEach(t => tgMap.set(t.getAttribute('data-heading'), t));
+  app.querySelectorAll('.pcard[data-phase]').forEach(card => {
+    const target = tgMap.get(card.getAttribute('data-phase'));
+    if (!target) { card.removeAttribute('role'); card.removeAttribute('tabindex'); return; }
+    card.classList.add('linked');
+    card.append(el('span', { class: 'pgo' }, '→'));
+    const go = () => {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      target.classList.remove('flash');
+      void target.offsetWidth; // restart animation
+      target.classList.add('flash');
+    };
+    card.addEventListener('click', go);
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
 
   // ---- Nav ----
   navEl.innerHTML = '';
