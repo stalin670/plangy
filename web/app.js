@@ -2,6 +2,36 @@ const app = document.getElementById('app');
 const statusEl = document.getElementById('status');
 const navEl = document.getElementById('nav');
 
+// ---- preferences (theme + collapsed panels), persisted ----
+const PREF_KEY = 'plangy-prefs';
+let prefs = { theme: 'dark', collapsed: {} };
+try { prefs = { ...prefs, ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; } catch { /* ignore */ }
+function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch { /* ignore */ } }
+function applyTheme() { document.documentElement.dataset.theme = prefs.theme; }
+applyTheme();
+
+function persistCollapse() {
+  const c = {};
+  app.querySelectorAll('section[id]').forEach(s => { if (s.id !== 'overview') c[s.id] = s.classList.contains('collapsed'); });
+  prefs.collapsed = c;
+  savePrefs();
+}
+function applyCollapsePrefs() {
+  app.querySelectorAll('section[id]').forEach(s => {
+    if (s.id === 'overview') return;
+    const want = (s.id in prefs.collapsed) ? prefs.collapsed[s.id] : (s.id === 'code');
+    s.classList.toggle('collapsed', want);
+  });
+}
+
+const themeBtn = document.getElementById('theme');
+function syncThemeBtn() { themeBtn.textContent = prefs.theme === 'light' ? 'dark' : 'light'; }
+themeBtn.addEventListener('click', () => {
+  prefs.theme = prefs.theme === 'light' ? 'dark' : 'light';
+  applyTheme(); savePrefs(); syncThemeBtn();
+});
+syncThemeBtn();
+
 mermaid.initialize({
   startOnLoad: false,
   securityLevel: 'loose',
@@ -39,7 +69,7 @@ function section(id, eyebrow, title, count) {
   const eb = el('div', { class: 'eyebrow' }, eyebrow);
   if (count) eb.append(el('span', { class: 'count' }, count));
   const h = el('h2', {}, title);
-  h.addEventListener('click', () => s.classList.toggle('collapsed'));
+  h.addEventListener('click', () => { s.classList.toggle('collapsed'); persistCollapse(); });
   s.append(eb, h);
   return s;
 }
@@ -199,7 +229,6 @@ async function render(model) {
   // ---- Code ----
   if (model.code && model.code.length) {
     const cd = section('code', 'snippets', 'Code', `${model.code.length}`);
-    cd.classList.add('collapsed'); // heavy; start collapsed
     let lastPhase = null;
     for (const blk of model.code) {
       if (blk.phaseTitle && blk.phaseTitle !== lastPhase) {
@@ -303,6 +332,9 @@ async function render(model) {
     card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
   });
 
+  // ---- apply saved collapse state ----
+  applyCollapsePrefs();
+
   // ---- Nav + collapse-all toggle ----
   navEl.innerHTML = '';
   for (const [id, label] of nav) navEl.append(el('a', { href: `#${id}` }, label));
@@ -315,6 +347,7 @@ async function render(model) {
   toggle.addEventListener('click', () => {
     const collapse = !collapsibles().every(s => s.classList.contains('collapsed'));
     collapsibles().forEach(s => s.classList.toggle('collapsed', collapse));
+    persistCollapse();
     sync();
   });
   navEl.append(toggle);
