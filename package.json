@@ -1,16 +1,40 @@
 {
   "name": "plangy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Turn any plan.md into live-reloading visuals in your browser.",
   "type": "module",
-  "bin": { "plangy": "bin/cli.js" },
-  "files": ["bin", "src", "web"],
-  "engines": { "node": ">=18" },
-  "keywords": ["plan", "markdown", "visualize", "mermaid", "cli", "ai-agent", "claude", "plan.md"],
+  "bin": {
+    "plangy": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "web"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "plan",
+    "markdown",
+    "visualize",
+    "mermaid",
+    "cli",
+    "ai-agent",
+    "claude",
+    "plan.md"
+  ],
   "homepage": "https://github.com/stalin670/plangy#readme",
-  "repository": { "type": "git", "url": "git+https://github.com/stalin670/plangy.git" },
-  "bugs": { "url": "https://github.com/stalin670/plangy/issues" },
-  "scripts": { "test": "node --test" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stalin670/plangy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stalin670/plangy/issues"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
   "license": "MIT",
   "dependencies": {
     "chokidar": "^3.6.0",
