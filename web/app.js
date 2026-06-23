@@ -1,95 +1,172 @@
 const app = document.getElementById('app');
 const statusEl = document.getElementById('status');
+const navEl = document.getElementById('nav');
 
-mermaid.initialize({ startOnLoad: false });
+mermaid.initialize({
+  startOnLoad: false,
+  securityLevel: 'loose',
+  theme: 'base',
+  themeVariables: {
+    background: '#161A21',
+    primaryColor: '#1B212B',
+    primaryBorderColor: '#5AA2FF',
+    primaryTextColor: '#E6EDF3',
+    secondaryColor: '#1B212B',
+    tertiaryColor: '#161A21',
+    lineColor: '#3A4756',
+    fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
+    fontSize: '13px',
+  },
+  flowchart: { htmlLabels: true, curve: 'basis', nodeSpacing: 26, rankSpacing: 40, padding: 8 },
+});
 
 function el(tag, attrs = {}, ...kids) {
   const n = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
-    if (k === 'class') n.className = v; else n.setAttribute(k, v);
+    if (k === 'class') n.className = v;
+    else if (k === 'html') n.innerHTML = v;
+    else n.setAttribute(k, v);
   }
-  for (const k of kids) n.append(k);
+  for (const k of kids) if (k != null) n.append(k);
   return n;
 }
 
-function section(id, title) {
+let _c = 0;
+const uid = () => _c++;
+
+function section(id, eyebrow, title, count) {
   const s = el('section', { id });
+  const eb = el('div', { class: 'eyebrow' }, eyebrow);
+  if (count) eb.append(el('span', { class: 'count' }, count));
   const h = el('h2', {}, title);
   h.addEventListener('click', () => s.classList.toggle('collapsed'));
-  s.append(h);
+  s.append(eb, h);
   return s;
 }
 
-let _c = 0; const id = () => _c++;
-
 async function renderMermaid(container, src, i) {
+  const wrap = el('div', { class: 'mermaid-wrap' });
   try {
-    const { svg } = await mermaid.render(`m${id()}_${i}`, src);
-    const d = el('div'); d.innerHTML = svg; container.append(d);
+    const { svg } = await mermaid.render(`m${uid()}_${i}`, src);
+    wrap.innerHTML = svg;
   } catch (e) {
-    container.append(el('pre', { class: 'err' }, `mermaid error: ${e.message}`));
+    wrap.append(el('div', { class: 'err' }, `diagram error: ${e.message}`));
   }
+  container.append(wrap);
+}
+
+function filePath(p) {
+  const i = p.lastIndexOf('/');
+  if (i < 0) return el('span', { class: 'path' }, p);
+  return el('span', { class: 'path' }, el('span', { class: 'dir' }, p.slice(0, i + 1)), p.slice(i + 1));
 }
 
 async function render(model) {
   app.innerHTML = '';
+  const nav = [];
 
-  const flow = section('flow', 'Flow');
+  // ---- Flow ----
+  const flow = section('flow', 'pipeline', 'Flow');
   await renderMermaid(flow, model.flow, 'flow');
   app.append(flow);
+  nav.push(['flow', 'Flow']);
 
+  // ---- Tasks ----
   if (model.tasks.length) {
-    const t = section('tasks', 'Tasks');
+    const totDone = model.tasks.reduce((a, g) => a + g.done, 0);
+    const totAll = model.tasks.reduce((a, g) => a + g.total, 0);
+    const t = section('tasks', 'progress', 'Tasks', `${totDone}/${totAll} done`);
     for (const g of model.tasks) {
       const pct = g.total ? Math.round((g.done / g.total) * 100) : 0;
-      t.append(el('h3', {}, `${g.heading} - ${g.done}/${g.total} (${pct}%)`));
-      const bar = el('div', { class: 'bar' }); bar.append(el('i', { style: `width:${pct}%` }));
-      t.append(bar);
+      const state = pct === 100 ? 'done' : pct > 0 ? 'part' : 'zero';
+      const group = el('div', { class: 'taskgroup' });
+      group.append(el('div', { class: 'tg-head' },
+        el('span', { class: 'tg-title' }, g.heading),
+        el('span', { class: 'tg-meta' }, el('b', {}, `${g.done}/${g.total}`), ` · ${pct}%`),
+      ));
+      const rail = el('div', { class: `rail ${state}` });
+      rail.append(el('span', { style: `width:${state === 'zero' ? 0 : pct}%` }));
+      group.append(rail);
+      const items = el('div', { class: 'items' });
       for (const it of g.items) {
-        t.append(el('div', { class: 'task' + (it.checked ? ' done' : '') }, (it.checked ? '☑ ' : '☐ ') + it.text));
+        items.append(el('div', { class: 'item' + (it.checked ? ' on' : '') },
+          el('span', { class: 'chk' }, it.checked ? '✓' : ''),
+          el('span', { class: 'txt' }, it.text),
+        ));
       }
+      group.append(items);
+      t.append(group);
     }
     app.append(t);
+    nav.push(['tasks', 'Tasks']);
   }
 
+  // ---- Files ----
   if (model.files.length) {
-    const f = section('files', 'Files');
-    const ul = el('ul', { class: 'tree' });
+    const f = section('files', 'change map', 'Files', `${model.files.length} files`);
+    const list = el('div', { class: 'files' });
     for (const fr of model.files) {
-      ul.append(el('li', {}, fr.path + (fr.phaseTitle ? `  (${fr.phaseTitle})` : '')));
+      const row = el('div', { class: 'file' }, filePath(fr.path));
+      if (fr.phaseTitle) row.append(el('span', { class: 'chip' }, fr.phaseTitle));
+      list.append(row);
     }
-    f.append(ul); app.append(f);
+    f.append(list);
+    app.append(f);
+    nav.push(['files', 'Files']);
   }
 
+  // ---- Diagrams ----
   if (model.mermaid.length) {
-    const d = section('diagrams', 'Diagrams');
+    const d = section('diagrams', 'embedded', 'Diagrams', `${model.mermaid.length}`);
     for (let i = 0; i < model.mermaid.length; i++) await renderMermaid(d, model.mermaid[i], i);
     app.append(d);
+    nav.push(['diagrams', 'Diagrams']);
   }
 
+  // ---- Tables ----
   if (model.tables.length) {
-    const tb = section('tables', 'Tables');
-    for (const t of model.tables) {
+    const tb = section('tables', 'data', 'Tables', `${model.tables.length}`);
+    for (const tbl of model.tables) {
+      const wrap = el('div', { class: 'tbl-wrap' });
       const table = el('table');
-      const thead = el('tr'); for (const h of t.header) thead.append(el('th', {}, h));
+      const thead = el('tr');
+      for (const h of tbl.header) thead.append(el('th', {}, h));
       table.append(thead);
-      for (const row of t.rows) { const tr = el('tr'); for (const c of row) tr.append(el('td', {}, c)); table.append(tr); }
-      tb.append(table);
+      for (const row of tbl.rows) {
+        const tr = el('tr');
+        for (const c of row) tr.append(el('td', {}, c));
+        table.append(tr);
+      }
+      wrap.append(table);
+      tb.append(wrap);
     }
     app.append(tb);
+    nav.push(['tables', 'Tables']);
   }
 
+  // ---- Notes ----
   if (model.notes.length) {
-    const n = section('notes', 'Notes');
-    for (const note of model.notes) n.append(el('p', {}, note));
+    const n = section('notes', 'context', 'Notes', `${model.notes.length}`);
+    const box = el('div', { class: 'notes' });
+    for (const note of model.notes) box.append(el('p', {}, note));
+    n.append(box);
     app.append(n);
+    nav.push(['notes', 'Notes']);
   }
+
+  // ---- Nav ----
+  navEl.innerHTML = '';
+  for (const [id, label] of nav) navEl.append(el('a', { href: `#${id}` }, label));
 }
 
 async function load() {
-  const model = await fetch('/model').then(r => r.json());
-  await render(model);
-  statusEl.classList.remove('stale');
+  try {
+    const model = await fetch('/model').then(r => r.json());
+    await render(model);
+    statusEl.classList.remove('stale');
+  } catch (e) {
+    statusEl.classList.add('stale');
+  }
 }
 
 const es = new EventSource('/events');

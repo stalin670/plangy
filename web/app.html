@@ -8,14 +8,11 @@
 </head>
 <body>
   <header class="topbar">
-    <strong>plangy</strong>
+    <span class="brand">plangy<span class="dot">.</span></span>
     <span id="filename"></span>
-    <span id="status" class="dot" title="live reload">●</span>
+    <span id="status" class="live"><span class="dot"></span><span class="label">live</span></span>
   </header>
-  <nav class="jump">
-    <a href="#flow">Flow</a><a href="#tasks">Tasks</a><a href="#files">Files</a>
-    <a href="#diagrams">Diagrams</a><a href="#tables">Tables</a><a href="#notes">Notes</a>
-  </nav>
+  <nav class="jump" id="nav"></nav>
   <main id="app"></main>
   <script src="/mermaid.min.js"></script>
   <script src="/app.js"></script>

@@ -29,6 +29,12 @@ export function parsePlan(md) {
 
   const tree = processor.parse(md);
   let current = null;
+  // Checklist items are grouped by their enclosing heading. Markdown splits a
+  // list into several list nodes when other blocks (code, paragraphs) sit
+  // between items, so we merge every checklist under the same heading into one
+  // group instead of emitting a group per fragment.
+  const taskGroups = new Map();
+  const seenFiles = new Set();
 
   for (const node of tree.children) {
     if (node.type === 'heading') {
@@ -51,13 +57,16 @@ export function parsePlan(md) {
         }
       }
       if (items.length) {
-        model.tasks.push({
-          id: nextId('tasks'),
-          heading: current ? current.title : 'Tasks',
-          items,
-          done: items.filter(i => i.checked).length,
-          total: items.length,
-        });
+        const key = current ? current.id : '__root__';
+        let group = taskGroups.get(key);
+        if (!group) {
+          group = { id: nextId('tasks'), heading: current ? current.title : 'Tasks', items: [], done: 0, total: 0 };
+          taskGroups.set(key, group);
+          model.tasks.push(group);
+        }
+        group.items.push(...items);
+        group.total = group.items.length;
+        group.done = group.items.filter(i => i.checked).length;
       }
     } else if (node.type === 'paragraph' && !current) {
       model.notes.push(textOf(node).trim());
@@ -67,7 +76,8 @@ export function parsePlan(md) {
       const codes = [];
       collectInlineCode(node, codes);
       for (const v of codes) {
-        if (looksLikePath(v)) {
+        if (looksLikePath(v) && !seenFiles.has(v)) {
+          seenFiles.add(v);
           model.files.push({ path: v, phaseTitle: current ? current.title : '' });
         }
       }

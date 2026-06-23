@@ -41,6 +41,24 @@ test('groups checklist items under heading with done/total counts', () => {
   ]);
 });
 
+test('merges checklist fragments under one heading into a single group', () => {
+  // Code between items splits the markdown list into separate list nodes;
+  // they must still collapse into one task group for the heading.
+  const md = `### Task 1
+- [ ] step one
+
+\`\`\`
+some code
+\`\`\`
+
+- [x] step two`;
+  const m = parsePlan(md);
+  assert.equal(m.tasks.length, 1);
+  assert.equal(m.tasks[0].heading, 'Task 1');
+  assert.equal(m.tasks[0].total, 2);
+  assert.equal(m.tasks[0].done, 1);
+});
+
 test('captures mermaid code blocks as raw source', () => {
   const md = '```mermaid\ngraph TD;A-->B;\n```';
   const m = parsePlan(md);
