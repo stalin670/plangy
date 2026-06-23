@@ -22,7 +22,8 @@ function persistCollapse() {
 function applyCollapsePrefs() {
   app.querySelectorAll('section[id]').forEach(s => {
     if (s.id === 'overview') return;
-    const want = (s.id in prefs.collapsed) ? prefs.collapsed[s.id] : (s.id === 'code');
+    if (s.id === 'code') { s.classList.add('collapsed'); return; } // Code always starts collapsed
+    const want = (s.id in prefs.collapsed) ? prefs.collapsed[s.id] : false;
     s.classList.toggle('collapsed', want);
   });
 }
