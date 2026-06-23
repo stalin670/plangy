@@ -6,6 +6,7 @@ import chokidar from 'chokidar';
 import open from 'open';
 import { parsePlan } from './parser.js';
 import { phasesToMermaid, buildPipeline } from './flow.js';
+import { deriveStats, deriveCommands, deriveDeps } from './derive.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WEB = path.join(__dirname, '..', 'web');
@@ -13,10 +14,17 @@ const WEB = path.join(__dirname, '..', 'web');
 function buildModel(file) {
   const md = existsSync(file) ? readFileSync(file, 'utf8') : '';
   const model = parsePlan(md);
+  const deps = deriveDeps(model);
+  const { commands, commits } = deriveCommands(model);
+  const pipeline = buildPipeline(model.phases, model.tasks)
+    .map(n => ({ ...n, deps: deps[n.title] || [] }));
   return {
     ...model,
     flow: phasesToMermaid(model.phases),
-    pipeline: buildPipeline(model.phases, model.tasks),
+    pipeline,
+    stats: deriveStats(model),
+    commands,
+    commits,
   };
 }
 

@@ -23,7 +23,36 @@ test('loose prose with no heading becomes notes', () => {
 
 test('empty input yields empty model', () => {
   const m = parsePlan('');
-  assert.deepEqual(m, { phases: [], tasks: [], files: [], mermaid: [], tables: [], notes: [] });
+  assert.deepEqual(m, {
+    phases: [], tasks: [], files: [], mermaid: [], tables: [], notes: [],
+    code: [], outline: [], meta: {}, frontmatter: {}, runs: [],
+  });
+});
+
+test('extracts bold key-value lines as metadata', () => {
+  const m = parsePlan('# Plan\n\n**Goal:** ship it fast\n\n**Status:** draft');
+  assert.equal(m.meta.Goal, 'ship it fast');
+  assert.equal(m.meta.Status, 'draft');
+});
+
+test('parses yaml frontmatter', () => {
+  const m = parsePlan('---\ntitle: My Plan\nstatus: active\n---\n# Body');
+  assert.equal(m.frontmatter.title, 'My Plan');
+  assert.equal(m.frontmatter.status, 'active');
+  assert.equal(m.phases[0].title, 'Body');
+});
+
+test('captures non-mermaid code blocks with language and phase', () => {
+  const m = parsePlan('## Build\n\n```bash\nnpm test\n```');
+  assert.equal(m.code.length, 1);
+  assert.equal(m.code[0].lang, 'bash');
+  assert.equal(m.code[0].phaseTitle, 'Build');
+  assert.match(m.code[0].value, /npm test/);
+});
+
+test('builds an outline of headings', () => {
+  const m = parsePlan('# A\n## B\n### C');
+  assert.deepEqual(m.outline.map(h => `${h.depth}:${h.title}`), ['1:A', '2:B', '3:C']);
 });
 
 test('groups checklist items under heading with done/total counts', () => {
