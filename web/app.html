@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>plangy</title>
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <strong>plangy</strong>
+    <span id="filename"></span>
+    <span id="status" class="dot" title="live reload">●</span>
+  </header>
+  <nav class="jump">
+    <a href="#flow">Flow</a><a href="#tasks">Tasks</a><a href="#files">Files</a>
+    <a href="#diagrams">Diagrams</a><a href="#tables">Tables</a><a href="#notes">Notes</a>
+  </nav>
+  <main id="app"></main>
+  <script src="/mermaid.min.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
